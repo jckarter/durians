@@ -12,6 +12,7 @@
 
 int main()
 {
+    RUN_TEST(test_misc);
     RUN_TEST(test_scope);
     RUN_TEST(test_struct_meta);
     RUN_TEST(test_enum_meta);
