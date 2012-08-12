@@ -14,23 +14,38 @@
 using namespace std;
 using namespace shit;
 
-static_assert(is_trivially_copy_constructible<maybe<int>>::value, "");
-static_assert(is_trivially_copy_assignable<maybe<int>>::value, "");
-static_assert(is_trivially_move_constructible<maybe<int>>::value, "");
-static_assert(is_trivially_move_assignable<maybe<int>>::value, "");
-static_assert(is_trivially_destructible<maybe<int>>::value, "");
+static_assert(is_trivially_copy_constructible<maybe<int>>::value,
+              "maybe should be trivially copyable for trivial type");
+static_assert(is_trivially_copy_assignable<maybe<int>>::value,
+              "maybe should be trivially copy-assignable for trivial type");
+static_assert(is_trivially_move_constructible<maybe<int>>::value,
+              "maybe should be trivially movable for trivial type");
+static_assert(is_trivially_move_assignable<maybe<int>>::value,
+              "maybe should be trivially move-assignable for trivial type");
+static_assert(is_trivially_destructible<maybe<int>>::value,
+              "maybe should be trivially destructible for trivial type");
 
-static_assert(is_trivially_copy_constructible<maybe<int&>>::value, "");
-static_assert(is_trivially_copy_assignable<maybe<int&>>::value, "");
-static_assert(is_trivially_move_constructible<maybe<int&>>::value, "");
-static_assert(is_trivially_move_assignable<maybe<int&>>::value, "");
-static_assert(is_trivially_destructible<maybe<int&>>::value, "");
+static_assert(is_trivially_copy_constructible<maybe<int&>>::value,
+              "maybe should be trivially copyable for reference type");
+static_assert(is_trivially_copy_assignable<maybe<int&>>::value,
+              "maybe should be trivially copy-assignable for reference type");
+static_assert(is_trivially_move_constructible<maybe<int&>>::value,
+              "maybe should be trivially movable for reference type");
+static_assert(is_trivially_move_assignable<maybe<int&>>::value,
+              "maybe should be trivially move-assignable for reference type");
+static_assert(is_trivially_destructible<maybe<int&>>::value,
+              "maybe should be trivially destructible for reference type");
 
-static_assert(is_copy_constructible<maybe<vector<int>>>::value, "");
-static_assert(is_copy_assignable<maybe<vector<int>>>::value, "");
-static_assert(is_move_constructible<maybe<vector<int>>>::value, "");
-static_assert(is_move_assignable<maybe<vector<int>>>::value, "");
-static_assert(is_destructible<maybe<vector<int>>>::value, "");
+static_assert(is_copy_constructible<maybe<vector<int>>>::value,
+              "maybe should be copyable");
+static_assert(is_copy_assignable<maybe<vector<int>>>::value,
+              "maybe should be copy-assignable");
+static_assert(is_move_constructible<maybe<vector<int>>>::value,
+              "maybe should be movable");
+static_assert(is_move_assignable<maybe<vector<int>>>::value,
+              "maybe should be move-assignable");
+static_assert(is_destructible<maybe<vector<int>>>::value,
+              "maybe should be destructible");
 
 struct blub {
     int x; float y;
