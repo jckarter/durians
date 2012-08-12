@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		D8E014FE15D8068900D1CC6D /* scope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D8E014FD15D8068900D1CC6D /* scope.cpp */; };
 		D8E0150015D8099300D1CC6D /* test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D8E014FF15D8099300D1CC6D /* test.cpp */; };
+		D8E0150215D80BE500D1CC6D /* struct_meta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D8E0150115D80BE500D1CC6D /* struct_meta.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,6 +31,7 @@
 		D8E014F515D8039A00D1CC6D /* misc.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; lineEnding = 0; path = misc.hpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		D8E014FD15D8068900D1CC6D /* scope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = scope.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		D8E014FF15D8099300D1CC6D /* test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = test.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
+		D8E0150115D80BE500D1CC6D /* struct_meta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = struct_meta.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +76,7 @@
 		D8E014FC15D805DC00D1CC6D /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				D8E0150115D80BE500D1CC6D /* struct_meta.cpp */,
 				D8E014FD15D8068900D1CC6D /* scope.cpp */,
 				D8E014FF15D8099300D1CC6D /* test.cpp */,
 			);
@@ -134,6 +137,7 @@
 			files = (
 				D8E014FE15D8068900D1CC6D /* scope.cpp in Sources */,
 				D8E0150015D8099300D1CC6D /* test.cpp in Sources */,
+				D8E0150215D80BE500D1CC6D /* struct_meta.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
