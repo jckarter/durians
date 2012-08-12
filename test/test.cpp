@@ -8,12 +8,12 @@
 
 #include <cstdio>
 
-void test_scope();
-void test_struct_meta();
+#define RUN_TEST(x) extern void x(); x();
 
 int main()
 {
-    test_scope();
-    test_struct_meta();
+    RUN_TEST(test_scope);
+    RUN_TEST(test_struct_meta);
+    RUN_TEST(test_enum_meta);
     std::puts("ok");
 }
