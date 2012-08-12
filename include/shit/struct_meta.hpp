@@ -1,6 +1,6 @@
 //
-//  StructMeta.hpp
-//  Megacanvas
+//  struct_meta.hpp
+//  shit
 //
 //  Created by Joe Groff on 7/23/12.
 //  Copyright (c) 2012 Durian Software. MIT license.

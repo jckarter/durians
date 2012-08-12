@@ -1,6 +1,6 @@
 //
-//  StructMetaTest.cpp
-//  Megacanvas
+//  struct_meta.cpp
+//  shit
 //
 //  Created by Joe Groff on 7/23/12.
 //  Copyright (c) 2012 Durian Software. All rights reserved.
