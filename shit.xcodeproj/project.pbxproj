@@ -13,6 +13,7 @@
 		D8E0150A15D8147400D1CC6D /* enum_meta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D8E0150915D8147400D1CC6D /* enum_meta.cpp */; };
 		D8E0150D15D836BD00D1CC6D /* maybe.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D8E0150C15D836BD00D1CC6D /* maybe.cpp */; };
 		D8E0151315D8765C00D1CC6D /* misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D8E0151215D8765C00D1CC6D /* misc.cpp */; };
+		D8E0151615D87DA000D1CC6D /* slice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D8E0151515D87DA000D1CC6D /* slice.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,6 +41,8 @@
 		D8E0150B15D8362A00D1CC6D /* maybe.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = maybe.hpp; sourceTree = "<group>"; };
 		D8E0150C15D836BD00D1CC6D /* maybe.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = maybe.cpp; sourceTree = "<group>"; };
 		D8E0151215D8765C00D1CC6D /* misc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = misc.cpp; sourceTree = "<group>"; };
+		D8E0151415D87AEE00D1CC6D /* slice.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = slice.hpp; sourceTree = "<group>"; };
+		D8E0151515D87DA000D1CC6D /* slice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = slice.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +76,7 @@
 		D8E014F115D8013600D1CC6D /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				D8E0151415D87AEE00D1CC6D /* slice.hpp */,
 				D8E014F215D801C400D1CC6D /* struct_meta.hpp */,
 				D8E014F315D802D200D1CC6D /* scope.hpp */,
 				D8E014F515D8039A00D1CC6D /* misc.hpp */,
@@ -92,6 +96,7 @@
 				D8E0151215D8765C00D1CC6D /* misc.cpp */,
 				D8E0150915D8147400D1CC6D /* enum_meta.cpp */,
 				D8E0150C15D836BD00D1CC6D /* maybe.cpp */,
+				D8E0151515D87DA000D1CC6D /* slice.cpp */,
 			);
 			name = Tests;
 			path = test;
@@ -154,6 +159,7 @@
 				D8E0150A15D8147400D1CC6D /* enum_meta.cpp in Sources */,
 				D8E0150D15D836BD00D1CC6D /* maybe.cpp in Sources */,
 				D8E0151315D8765C00D1CC6D /* misc.cpp in Sources */,
+				D8E0151615D87DA000D1CC6D /* slice.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
