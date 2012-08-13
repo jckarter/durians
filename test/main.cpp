@@ -17,5 +17,6 @@ int main()
     RUN_TEST(test_struct_meta);
     RUN_TEST(test_enum_meta);
     RUN_TEST(test_maybe);
+    RUN_TEST(test_slice);
     std::puts("ok");
 }
