@@ -175,6 +175,12 @@ static void test_maybe_nontrivial()
     just4 = move(just2);
     assert(just4);
     assert((*just4 == vector<int>{6,7,8}));
+    
+    just4 = nullptr;
+    assert(!just4);
+    
+    just4 = nullptr;
+    assert(!just4);
 }
 
 static void test_maybe_reference()

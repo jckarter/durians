@@ -59,13 +59,13 @@ namespace shit {
     };
         
     template<typename T>
-    class maybe<T, typename std::enable_if<!std::is_trivial<T>::value && !std::is_reference<T>::value>::type>
+    class maybe<T, typename std::enable_if<!std::is_trivial<T>::value
+                                           && !std::is_reference<T>::value>::type>
     {
     protected:
         bool present;
         union {
             T value;
-            char _[sizeof(T)];
         };
         
     public:
@@ -94,33 +94,39 @@ namespace shit {
             if (this == &x) {
                 // nothing
             }
-            else if (this->present && x.present) {
-                this->value = x.value;
+            else if (present && x.present) {
+                value = x.value;
             }
-            else if (this->present) {
-                this->value.~T();
-                this->present = false;
+            else if (present) {
+                value.~T();
+                present = false;
             }
             else if (x.present) {
-                new (&this->value) T(x.value);
-                this->present = true;
+                new (&value) T(x.value);
+                present = true;
             }
             return *this;
         }
         
         maybe &operator=(maybe &&x) {
-            if (this->present && x.present) {
-                this->value = std::move(x.value);
+            if (present && x.present) {
+                value = std::move(x.value);
             }
-            else if (this->present) {
-                this->present = false;
-                this->value.~T();
+            else if (present) {
+                present = false;
+                value.~T();
             }
             else if (x.present) {
-                this->present = true;
-                new (&this->value) T(std::move(x.value));
+                present = true;
+                new (&value) T(std::move(x.value));
             }
             return *this;
+        }
+        
+        maybe &operator=(std::nullptr_t) {
+            if (present)
+                value.~T();
+            present = false;
         }
         
         explicit operator bool() const { return present; }
