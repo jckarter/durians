@@ -23,9 +23,9 @@ static_assert(is_type_in<int, char, int>::value,
 static_assert(!is_type_in<int, char, float>::value,
               "is_type_in should return false if type not present");
 
-static_assert(type_index<int, int, char>::value == 0,
+static_assert(index_of_type<int, int, char>::value == 0,
               "type_index should return index into type pack");
-static_assert(type_index<int, char, int>::value == 1,
+static_assert(index_of_type<int, char, int>::value == 1,
               "type_index should return index into type pack");
 
 static_assert(is_any_type<is_integral, int, float, void*>::value,

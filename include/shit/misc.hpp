@@ -69,17 +69,29 @@ namespace shit {
 
     namespace internal {
         template<size_t N, typename T, typename...UU>
-        struct type_index;
+        struct index_of_type;
     
         template<size_t N, typename T, typename...UU>
-        struct type_index<N, T, T, UU...> : std::integral_constant<size_t, N> {};
+        struct index_of_type<N, T, T, UU...> : std::integral_constant<size_t, N> {};
         
         template<size_t N, typename T, typename U, typename...UU>
-        struct type_index<N, T, U, UU...> : type_index<N+1, T, UU...> {};
+        struct index_of_type<N, T, U, UU...> : index_of_type<N+1, T, UU...> {};
+
+        template<size_t N, typename...TT>
+        struct type_at;
+        template<typename T, typename...TT>
+        struct type_at<0, T, TT...> {
+            using type = T;
+        };
+        template<size_t N, typename T, typename...TT>
+        struct type_at<N, T, TT...> : type_at<N-1, TT...> {};
     }
     
     template<typename T, typename...UU>
-    using type_index = internal::type_index<0, T, UU...>;
+    using index_of_type = internal::index_of_type<0, T, UU...>;
+
+    template<size_t N, typename...TT>
+    using type_at = typename internal::type_at<N, TT...>::type;
     
     namespace internal {
         template<size_t N, size_t...NN>
