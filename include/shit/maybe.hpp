@@ -127,6 +127,7 @@ namespace shit {
             if (present)
                 value.~T();
             present = false;
+            return *this;
         }
         
         explicit operator bool() const { return present; }

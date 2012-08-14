@@ -9,6 +9,8 @@
 #ifndef shit_enum_meta_hpp
 #define shit_enum_meta_hpp
 
+#include <shit/misc.hpp>
+#include <cstdlib>
 #include <cstring>
 
 // Define a macro META_MEMBERS_EnumName to define an enum's members, then use
@@ -45,12 +47,10 @@
     if (x == E::name) \
         return #name;
 
-// fixme use string_slice
 #define _META_ENUM_MEMBER_NAME_TO_VALUE(name, value) \
     if (::std::strcmp(x, #name) == 0) \
         return E::name;
 
-// fixme use optional
 #define _META_ENUM_TRAITS(NAME) \
     inline char const *Q_enum_member_name(NAME x) { \
         using E = NAME; \
@@ -60,18 +60,18 @@
     inline NAME Q_enum_from_name(NAME dummy, char const *x) { \
         using E = NAME; \
         META_MEMBERS_##NAME(_META_ENUM_MEMBER_NAME_TO_VALUE) \
-        throw 0; \
+        S_UNREACHABLE; \
     }
 
 namespace shit {
     template<typename E>
-    char const *enum_member_name(E x)
+    inline char const *enum_member_name(E x)
     {
         return Q_enum_member_name(x);
     }
     
     template<typename E>
-    E enum_from_name(char const *name)
+    inline E enum_from_name(char const *name)
     {
         return Q_enum_from_name(E(), name);
     }

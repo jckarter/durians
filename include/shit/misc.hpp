@@ -14,6 +14,12 @@
 #define _S_CAT(a, b) a##b
 #define S_CAT(a, b) _S_CAT(a,b)
 
+#ifdef NDEBUG
+#define S_UNREACHABLE assert(false);
+#else
+#define S_UNREACHABLE ::std::abort();
+#endif
+
 namespace shit {
     template<typename T>
     using type = T;
