@@ -18,5 +18,6 @@ int main()
     RUN_TEST(test_enum_meta);
     RUN_TEST(test_maybe);
     RUN_TEST(test_slice);
+    RUN_TEST(test_reftype);
     std::puts("ok");
 }
