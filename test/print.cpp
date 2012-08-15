@@ -32,9 +32,8 @@ struct bluh {
 void test_print()
 {
     using shit::delim::space;
-    string s;
-    
-    strprintln(s, 1, space, short(2), space, 3l, space, 4.5);
+
+    string s = strln(s, 1, space, short(2), space, 3l, space, 4.5);
     
     assert(s == "1 2 3 4.5\n");
 

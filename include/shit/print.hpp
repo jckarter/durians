@@ -24,7 +24,7 @@ namespace shit {
     };
     
     template<char...c>
-    const char string_constant<c...>::value[sizeof...(c)+1] = {c..., '\0'};
+    constexpr char string_constant<c...>::value[sizeof...(c)+1] = {c..., '\0'};
         
     template<typename...T>
     struct concat_string_constant;
@@ -191,7 +191,7 @@ namespace shit {
         };
 
         template<typename...T>
-        using format_string = concat_string_constant<typename format_chars<T>::chars...>;        
+        struct format_string : concat_string_constant<typename format_chars<T>::chars...> {};
         
         template<size_t N, typename If, typename...T>
         struct format_arg;
@@ -216,26 +216,54 @@ namespace shit {
         struct format_arg_count
         : std::integral_constant<std::size_t, sum(print_traits<TT>::format_arg_count...)>
         {};
-        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-security"
         template<size_t...N, typename...T>
         inline int _print(values<size_t, N...>, T &&...args)
         {
-            return ::std::printf(internal::format_string<T...>::value,
-                                 format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
+            return std::printf(internal::format_string<T...>::value,
+                               format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
         }
         template<size_t...N, typename...T>
         inline int _fprint(values<size_t, N...>, std::FILE *f, T &&...args)
         {
-            return ::std::fprintf(f, internal::format_string<T...>::value,
-                                  format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
+            return std::fprintf(f, internal::format_string<T...>::value,
+                                format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
         }
         template<size_t...N, typename...T>
         inline int _snprint(values<size_t, N...>, char *out, size_t size, T &&...args)
         {
-            return ::std::snprintf(out, size, internal::format_string<T...>::value,
-                                   format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
+            return std::snprintf(out, size, internal::format_string<T...>::value,
+                                 format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
         }
         
+        template<typename String, typename...TT>
+        inline void _strprintf(String &s, char const *format, TT &&...args)
+        {
+            size_t offset = s.size();
+            size_t capacity = s.capacity();
+            
+            s.resize(capacity);
+            for (;;) {
+                size_t count = std::snprintf(&s[offset], capacity-offset+1, format,
+                                             std::forward<TT>(args)...);
+                if (offset+count <= capacity) {
+                    s.resize(offset+count);
+                    break;
+                }
+                capacity = offset+count;
+                s.resize(capacity);
+            }
+        }
+#pragma clang diagnostic pop
+
+        template<size_t...N, typename String, typename...T>
+        inline void _strprint(values<size_t, N...>, String &out, T &&...args)
+        {
+            _strprintf(out, internal::format_string<T...>::value,
+                       format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
+        }
+
         template<typename TT, typename NN, typename CC>
         struct _tuple_print_traits;
         
@@ -309,20 +337,16 @@ namespace shit {
     template<typename String, typename...T>
     inline void strprint(String &s, T &&...args)
     {
-        size_t count = std::numeric_limits<size_t>::max();
-        size_t offset = s.size();
-        size_t capacity = s.capacity();
-        
-        s.resize(capacity);
-        for (;;) {
-            count = snprint(&s[offset], capacity-offset+1, std::forward<T>(args)...);
-            if (offset+count <= capacity) {
-                s.resize(offset+count);
-                break;
-            }
-            capacity = offset+count;
-            s.resize(capacity);
-        }
+        internal::_strprint(integers<internal::format_arg_count<T...>::value>(),
+                            s, std::forward<T>(args)...);
+    }
+    
+    template<typename String = std::string, typename...T>
+    inline String str(T &&...args)
+    {
+        String ret;
+        strprint(ret, std::forward<T>(args)...);
+        return ret;
     }
 
     namespace delim {
@@ -354,6 +378,12 @@ namespace shit {
     inline void strprintln(String &s, T &&...args)
     {
         strprint(s, std::forward<T>(args)..., delim::nl);
+    }
+
+    template<typename String = std::string, typename...T>
+    inline String strln(T &&...args)
+    {
+        return str(std::forward<T>(args)..., delim::nl);
     }
 }
 
