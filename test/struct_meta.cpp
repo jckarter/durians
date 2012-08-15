@@ -1,18 +1,18 @@
 //
 //  struct_meta.cpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 7/23/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#include <shit/struct_meta.hpp>
+#include <durians/struct_meta.hpp>
 #include <array>
 #undef NDEBUG
 #include <cassert>
 #include <vector>
 
-namespace shit_test {
+namespace durians_test {
     enum type_token { Int, Float, ArrayInt4 };
     
     template<typename> struct type_token_traits;
@@ -35,14 +35,14 @@ namespace shit_test {
     x(bas, array<int, 4>)
         META_STRUCT(Foo)
         
-        static_assert(shit::aggregate_size<Foo>::value == 3, "tuple_size of meta struct");
-        static_assert(std::is_same<shit::aggregate_element<0, Foo>::type, int>::value, "tuple_element of meta struct");
-        static_assert(std::is_same<shit::aggregate_element<1, Foo>::type, float>::value, "tuple_element of meta struct");
-        static_assert(std::is_same<shit::aggregate_element<2, Foo>::type, array<int,4>>::value, "tuple_element of meta struct");
+        static_assert(durians::aggregate_size<Foo>::value == 3, "tuple_size of meta struct");
+        static_assert(std::is_same<durians::aggregate_element<0, Foo>::type, int>::value, "tuple_element of meta struct");
+        static_assert(std::is_same<durians::aggregate_element<1, Foo>::type, float>::value, "tuple_element of meta struct");
+        static_assert(std::is_same<durians::aggregate_element<2, Foo>::type, array<int,4>>::value, "tuple_element of meta struct");
         
         vector<tuple<char const *, int, int, type_token>> info;
             
-        shit::each_field_metadata<Foo, type_token_traits>([&](char const * name,
+        durians::each_field_metadata<Foo, type_token_traits>([&](char const * name,
                                                               int size,
                                                               int offset,
                                                               type_token token) {
@@ -74,27 +74,27 @@ namespace shit_test {
         Bar bar;
         const Bar cbar{3, 4.0f, 5};
             
-        shit::each_field(bar, fill());
+        durians::each_field(bar, fill());
         assert(bar.foo == 0);
         assert(bar.bar == 1.0f);
         assert(bar.bas == 2);
         
-        assert(shit::get<0>(bar) == 0);
-        assert(shit::get<1>(bar) == 1.0f);
-        assert(shit::get<2>(bar) == 2);
-        assert(shit::get<0>(cbar) == 3);
-        assert(shit::get<1>(cbar) == 4.0f);
-        assert(shit::get<2>(cbar) == 5);
-        assert(shit::get<0>(Bar{7, 8.0f, 9}) == 7);
-        assert(shit::get<1>(Bar{7, 8.0f, 9}) == 8.0f);
-        assert(shit::get<2>(Bar{7, 8.0f, 9}) == 9);
+        assert(durians::get<0>(bar) == 0);
+        assert(durians::get<1>(bar) == 1.0f);
+        assert(durians::get<2>(bar) == 2);
+        assert(durians::get<0>(cbar) == 3);
+        assert(durians::get<1>(cbar) == 4.0f);
+        assert(durians::get<2>(cbar) == 5);
+        assert(durians::get<0>(Bar{7, 8.0f, 9}) == 7);
+        assert(durians::get<1>(Bar{7, 8.0f, 9}) == 8.0f);
+        assert(durians::get<2>(Bar{7, 8.0f, 9}) == 9);
     }
     
 }
 
 void test_struct_meta()
 {
-    using namespace shit_test;
+    using namespace durians_test;
     test_each_field_metadata();
     test_each_field();
 }

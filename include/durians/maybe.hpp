@@ -1,20 +1,20 @@
 //
 //  maybe.hpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/12/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#ifndef shit_maybe_hpp
-#define shit_maybe_hpp
+#ifndef durians_maybe_hpp
+#define durians_maybe_hpp
 
 #include <type_traits>
 #include <utility>
 #include <cassert>
 #include <cstddef>
 
-namespace shit {
+namespace durians {
     template<typename T, typename If = void>
     class maybe;
     

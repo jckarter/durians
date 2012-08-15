@@ -1,13 +1,13 @@
 //
 //  misc.hpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/12/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#ifndef shit_misc_hpp
-#define shit_misc_hpp
+#ifndef durians_misc_hpp
+#define durians_misc_hpp
 
 #include <type_traits>
 #include <utility>
@@ -23,7 +23,7 @@
 
 #define S_AUTO(...) -> decltype(__VA_ARGS__) { return __VA_ARGS__; }
 
-namespace shit {
+namespace durians {
     template<typename T>
     using type = T;
     

@@ -1,18 +1,18 @@
 //
 //  print.cpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/14/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#include <shit/enum_meta.hpp>
-#include <shit/struct_meta.hpp>
-#include <shit/print.hpp>
+#include <durians/enum_meta.hpp>
+#include <durians/struct_meta.hpp>
+#include <durians/print.hpp>
 #undef NDEBUG
 #include <cassert>
 
-using namespace shit;
+using namespace durians;
 using namespace std;
 
 struct thing {
@@ -45,7 +45,7 @@ META_STRUCT(meta_struct)
 
 void test_print()
 {
-    using shit::delim::space;
+    using durians::delim::space;
 
     string s = strln(s, 1, space, short(2), space, 3l, space, 4.5);
     

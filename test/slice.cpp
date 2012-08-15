@@ -1,17 +1,17 @@
 //
 //  slice.cpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/12/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#include <shit/slice.hpp>
+#include <durians/slice.hpp>
 #undef NDEBUG
 #include <cassert>
 
 using namespace std;
-using namespace shit;
+using namespace durians;
 
 static void test_make_slice()
 {

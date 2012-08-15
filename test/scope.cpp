@@ -1,12 +1,12 @@
 //
 //  scope.cpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/12/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#include <shit/scope.hpp>
+#include <durians/scope.hpp>
 #undef NDEBUG
 #include <cassert>
 

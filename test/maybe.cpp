@@ -1,18 +1,18 @@
 //
 //  maybe.cpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/12/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#include <shit/maybe.hpp>
+#include <durians/maybe.hpp>
 #include <vector>
 #undef NDEBUG
 #include <cassert>
 
 using namespace std;
-using namespace shit;
+using namespace durians;
 
 static_assert(is_trivially_copy_constructible<maybe<int>>::value,
               "maybe should be trivially copyable for trivial type");

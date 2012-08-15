@@ -1,15 +1,15 @@
 //
 //  struct_meta.hpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 7/23/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#ifndef shit_struct_meta_hpp
-#define shit_struct_meta_hpp
+#ifndef durians_struct_meta_hpp
+#define durians_struct_meta_hpp
 
-#include <shit/misc.hpp>
+#include <durians/misc.hpp>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -31,7 +31,7 @@
 // argument must be variadic.
 //
 
-namespace shit {
+namespace durians {
     
     namespace internal {
         template<size_t N>
@@ -39,7 +39,7 @@ namespace shit {
     }
     
 #define META_STRUCT_FIELD(name, ...) \
-    ::shit::type<__VA_ARGS__> name;
+    ::durians::type<__VA_ARGS__> name;
 
 #define META_STRUCT_APPLY_FIELD_METADATA(name, ...) \
     f(#name, sizeof(__VA_ARGS__), offsetof(self_type, name), \
@@ -51,9 +51,9 @@ namespace shit {
 #define META_STRUCT_PLUS_ONE(...) +1
     
 #define META_STRUCT_GETTER(name, ...) \
-    static ::shit::type<__VA_ARGS__> &get(self_type &Q_x, ::shit::internal::element_t<size_t(aggregate_element_index::name)>) { return Q_x.name; } \
-    static ::shit::type<__VA_ARGS__> const &get(self_type const &Q_x, ::shit::internal::element_t<size_t(aggregate_element_index::name)>) { return Q_x.name; } \
-    static ::shit::type<__VA_ARGS__> &&get(self_type &&Q_x, ::shit::internal::element_t<size_t(aggregate_element_index::name)>) { return ::std::move(Q_x.name); }
+    static ::durians::type<__VA_ARGS__> &get(self_type &Q_x, ::durians::internal::element_t<size_t(aggregate_element_index::name)>) { return Q_x.name; } \
+    static ::durians::type<__VA_ARGS__> const &get(self_type const &Q_x, ::durians::internal::element_t<size_t(aggregate_element_index::name)>) { return Q_x.name; } \
+    static ::durians::type<__VA_ARGS__> &&get(self_type &&Q_x, ::durians::internal::element_t<size_t(aggregate_element_index::name)>) { return ::std::move(Q_x.name); }
 
 #define META_STRUCT_TYPE_LIST(name, ...) __VA_ARGS__,
 #define META_STRUCT_NAME_LIST(name, ...) name,
@@ -81,7 +81,7 @@ namespace shit {
             } \
             static constexpr ::std::size_t aggregate_size() { return 0 META_FIELDS_##NAME(META_STRUCT_PLUS_ONE); } \
             template<size_t N> \
-            using aggregate_element = ::shit::type_at<N, META_FIELDS_##NAME(META_STRUCT_TYPE_LIST) void>; \
+            using aggregate_element = ::durians::type_at<N, META_FIELDS_##NAME(META_STRUCT_TYPE_LIST) void>; \
             enum class aggregate_element_index : size_t { META_FIELDS_##NAME(META_STRUCT_NAME_LIST) }; \
             META_FIELDS_##NAME(META_STRUCT_GETTER) \
         }; \

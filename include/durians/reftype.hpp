@@ -1,18 +1,18 @@
 //
 //  reftype.hpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/14/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#ifndef shit_reftype_hpp
-#define shit_reftype_hpp
+#ifndef durians_reftype_hpp
+#define durians_reftype_hpp
 
-#include <shit/misc.hpp>
+#include <durians/misc.hpp>
 #include <utility>
 
-namespace shit {
+namespace durians {
 #define S_DECLARE_REFTYPE() \
     struct impl; \
     struct mut; \
@@ -22,20 +22,20 @@ namespace shit {
     void T::Q_delete() { delete reinterpret_cast<impl*>(Q_pimpl); }
 
 #define S_DECLARE_MAKE(...) \
-    static ::shit::owner<Q_type> make(__VA_ARGS__);
+    static ::durians::owner<Q_type> make(__VA_ARGS__);
     
 #define S_DEFINE_MAKE(T, types, names) \
-    ::shit::owner<T> T::make types { return ::shit::make_owner<T> names; }
+    ::durians::owner<T> T::make types { return ::durians::make_owner<T> names; }
     
 #define S_DECLARE_READER(propname, ...) \
-    ::shit::type<__VA_ARGS__> propname();
+    ::durians::type<__VA_ARGS__> propname();
 #define S_DECLARE_WRITER(propname, ...) \
-    void set_##propname(::shit::type<__VA_ARGS__>);
+    void set_##propname(::durians::type<__VA_ARGS__>);
     
 #define S_DEFINE_SIMPLE_READER(T, propname, ...) \
-    ::shit::type<__VA_ARGS__> T::propname() { return $.propname; }
+    ::durians::type<__VA_ARGS__> T::propname() { return $.propname; }
 #define S_DEFINE_SIMPLE_WRITER(T, propname, ...) \
-    void T::mut::set_##propname(::shit::type<__VA_ARGS__> Q_value) { $.propname = Q_value; }
+    void T::mut::set_##propname(::durians::type<__VA_ARGS__> Q_value) { $.propname = Q_value; }
 
 #define S_DEFINE_IMPL_FORWARD(T, ret, func, types, names) \
     ret T::func types { return $.func names; }
@@ -82,7 +82,7 @@ namespace shit {
         }
     }
     
-#define $ ::shit::internal::reftype_impl<Q_type>(*this)
+#define $ ::durians::internal::reftype_impl<Q_type>(*this)
     
     template<typename T>
     struct owner : T::mut {

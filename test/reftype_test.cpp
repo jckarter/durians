@@ -1,6 +1,6 @@
 //
 //  reftype_test.cpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/14/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
@@ -10,8 +10,8 @@
 #include <cstdio>
 #include <vector>
 
-namespace shit_test {
-    using namespace shit;
+namespace durians_test {
+    using namespace durians;
     using namespace std;
     
     struct reftype_test::impl : reftype_impl<reftype_test> {

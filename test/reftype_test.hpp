@@ -1,18 +1,18 @@
 //
 //  reftype_test.h
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/14/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#ifndef __shit__reftype_test__
-#define __shit__reftype_test__
+#ifndef __durians__reftype_test__
+#define __durians__reftype_test__
 
-#include <shit/reftype.hpp>
+#include <durians/reftype.hpp>
 
-namespace shit_test {
-    struct reftype_test : shit::reftype<reftype_test> {
+namespace durians_test {
+    struct reftype_test : durians::reftype<reftype_test> {
         S_DECLARE_REFTYPE()
         
         S_DECLARE_MAKE()
@@ -32,4 +32,4 @@ namespace shit_test {
     
 }
 
-#endif /* defined(__shit__reftype_test__) */
+#endif /* defined(__durians__reftype_test__) */

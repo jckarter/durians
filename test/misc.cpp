@@ -1,19 +1,19 @@
 //
 //  misc.cpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/12/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#include <shit/misc.hpp>
+#include <durians/misc.hpp>
 #include <cstdlib>
 #include <memory>
 #undef NDEBUG
 #include <cassert>
 
 using namespace std;
-using namespace shit;
+using namespace durians;
 
 static_assert(is_empty<static_function<void(void*), free>>::value,
               "static_function should be empty");

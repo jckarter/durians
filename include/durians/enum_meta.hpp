@@ -1,15 +1,15 @@
 //
 //  enum_meta.hpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/12/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#ifndef shit_enum_meta_hpp
-#define shit_enum_meta_hpp
+#ifndef durians_enum_meta_hpp
+#define durians_enum_meta_hpp
 
-#include <shit/misc.hpp>
+#include <durians/misc.hpp>
 #include <cstdlib>
 #include <cstring>
 
@@ -63,7 +63,7 @@
         S_UNREACHABLE; \
     }
 
-namespace shit {
+namespace durians {
     template<typename E>
     inline char const *enum_member_name(E x)
     {

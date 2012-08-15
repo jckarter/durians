@@ -1,13 +1,13 @@
 //
 //  slice.hpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 6/21/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#ifndef shit_slice_hpp
-#define shit_slice_hpp
+#ifndef durians_slice_hpp
+#define durians_slice_hpp
 
 #include <cassert>
 #include <cstring>
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-namespace shit {
+namespace durians {
     template<typename T>
     class basic_slice {
         T *the_data;

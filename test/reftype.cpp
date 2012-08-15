@@ -1,6 +1,6 @@
 //
 //  reftype.cpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/14/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
@@ -10,7 +10,7 @@
 #undef NDEBUG
 #include <cassert>
 
-using namespace shit_test;
+using namespace durians_test;
 
 void test_const_ref(reftype_test ref)
 {

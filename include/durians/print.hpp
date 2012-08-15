@@ -1,13 +1,13 @@
 //
 //  print.hpp
-//  shit
+//  durians
 //
 //  Created by Joe Groff on 8/14/12.
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
-#ifndef shit_print_hpp
-#define shit_print_hpp
+#ifndef durians_print_hpp
+#define durians_print_hpp
 
 #include <array>
 #include <limits>
@@ -15,11 +15,11 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
-#include <shit/enum_meta.hpp>
-#include <shit/misc.hpp>
-#include <shit/struct_meta.hpp>
+#include <durians/enum_meta.hpp>
+#include <durians/misc.hpp>
+#include <durians/struct_meta.hpp>
 
-namespace shit {
+namespace durians {
     template<char...c>
     struct string_constant {
         static const char value[sizeof...(c)+1];
