@@ -9,7 +9,8 @@
 #ifndef shit_struct_meta_hpp
 #define shit_struct_meta_hpp
 
-#include "misc.hpp"
+#include <shit/misc.hpp>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -32,6 +33,11 @@
 
 namespace shit {
     
+    namespace internal {
+        template<size_t N>
+        struct element_t {};
+    }
+    
 #define META_STRUCT_FIELD(name, ...) \
     ::shit::type<__VA_ARGS__> name;
 
@@ -41,6 +47,16 @@ namespace shit {
 
 #define META_STRUCT_APPLY_FIELD(name, ...) \
     f(#name, instance.name);
+
+#define META_STRUCT_PLUS_ONE(...) +1
+    
+#define META_STRUCT_GETTER(name, ...) \
+    static ::shit::type<__VA_ARGS__> &get(self_type &Q_x, ::shit::internal::element_t<size_t(aggregate_element_index::name)>) { return Q_x.name; } \
+    static ::shit::type<__VA_ARGS__> const &get(self_type const &Q_x, ::shit::internal::element_t<size_t(aggregate_element_index::name)>) { return Q_x.name; } \
+    static ::shit::type<__VA_ARGS__> &&get(self_type &&Q_x, ::shit::internal::element_t<size_t(aggregate_element_index::name)>) { return ::std::move(Q_x.name); }
+
+#define META_STRUCT_TYPE_LIST(name, ...) __VA_ARGS__,
+#define META_STRUCT_NAME_LIST(name, ...) name,
 
 #define META_STRUCT(NAME) \
     struct NAME { \
@@ -63,6 +79,11 @@ namespace shit {
             static void each_field(NAME &&instance, Function &&f) { \
                 META_FIELDS_##NAME(META_STRUCT_APPLY_FIELD) \
             } \
+            static constexpr ::std::size_t aggregate_size() { return 0 META_FIELDS_##NAME(META_STRUCT_PLUS_ONE); } \
+            template<size_t N> \
+            using aggregate_element = ::shit::type_at<N, META_FIELDS_##NAME(META_STRUCT_TYPE_LIST) void>; \
+            enum class aggregate_element_index : size_t { META_FIELDS_##NAME(META_STRUCT_NAME_LIST) }; \
+            META_FIELDS_##NAME(META_STRUCT_GETTER) \
         }; \
     };
 
@@ -78,6 +99,64 @@ namespace shit {
         struct_traits<typename std::remove_reference<T>::type>
         ::each_field(std::forward<T>(instance), std::forward<Function>(f));
     }
+    
+    template<typename T, typename If = void>
+    struct is_aggregate : std::integral_constant<bool, false> {};
+    template<typename...T>
+    struct is_aggregate<std::tuple<T...>> : std::integral_constant<bool, true> {};
+    template<typename T, typename U>
+    struct is_aggregate<std::pair<T, U>> : std::integral_constant<bool, true> {};
+    template<typename T, size_t N>
+    struct is_aggregate<std::array<T, N>> : std::integral_constant<bool, true> {};
+    template<typename T>
+    struct is_aggregate<T, typename std::enable_if<std::is_same<typename T::Q_struct_traits::self_type, T>::value>::type>
+    : std::integral_constant<bool, true> {};
+    
+    template<typename T, typename If = void>
+    struct aggregate_size : std::tuple_size<T> {};
+    template<size_t N, typename T, typename If = void>
+    struct aggregate_element : std::tuple_element<N, T> {};
+    
+    template<typename T>
+    struct aggregate_size<T, typename std::enable_if<std::is_same<typename T::Q_struct_traits::self_type, T>::value>::type>
+    : std::integral_constant<size_t, T::Q_struct_traits::aggregate_size()>
+    {};
+    
+    template<size_t N, typename T>
+    struct aggregate_element<N, T, typename std::enable_if<std::is_same<typename T::Q_struct_traits::self_type, T>::value>::type> {
+        using type = typename T::Q_struct_traits::template aggregate_element<N>;
+    };
+    
+    template<typename T> struct aggregate_size<T&> : aggregate_size<T> {};
+    template<typename T> struct aggregate_size<T&&> : aggregate_size<T> {};
+    template<typename T> struct aggregate_size<T const> : aggregate_size<T> {};
+    template<typename T> struct aggregate_size<T volatile> : aggregate_size<T> {};
+
+    template<size_t N, typename T> struct aggregate_element<N,T&> : aggregate_element<N, T> {};
+    template<size_t N, typename T> struct aggregate_element<N,T&&> : aggregate_element<N, T> {};
+    template<size_t N, typename T> struct aggregate_element<N,T const> : aggregate_element<N, T> {};
+    template<size_t N, typename T> struct aggregate_element<N,T volatile> : aggregate_element<N, T> {};
+    
+    template<size_t N, typename T>
+    inline typename aggregate_element<N, T>::type &
+    get(T &agg, typename T::Q_struct_traits* = nullptr)
+    {
+        return T::Q_struct_traits::get(agg, internal::element_t<N>());
+    }
+    template<size_t N, typename T>
+    inline typename aggregate_element<N, T>::type const &
+    get(T const &agg, typename T::Q_struct_traits* = nullptr)
+    {
+        return T::Q_struct_traits::get(agg, internal::element_t<N>());
+    }
+    template<size_t N, typename T>
+    inline typename aggregate_element<N, T>::type &&
+    get(T &&agg, typename T::Q_struct_traits* = nullptr)
+    {
+        return T::Q_struct_traits::get(std::move(agg), internal::element_t<N>());
+    }
+    
+    
 }
 
 #endif

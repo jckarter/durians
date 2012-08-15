@@ -12,7 +12,7 @@
 #include <cassert>
 #include <vector>
 
-namespace shit { namespace test {
+namespace shit_test {
     enum type_token { Int, Float, ArrayInt4 };
     
     template<typename> struct type_token_traits;
@@ -34,12 +34,18 @@ namespace shit { namespace test {
     x(bar, float) \
     x(bas, array<int, 4>)
         META_STRUCT(Foo)
+        
+        static_assert(shit::aggregate_size<Foo>::value == 3, "tuple_size of meta struct");
+        static_assert(std::is_same<shit::aggregate_element<0, Foo>::type, int>::value, "tuple_element of meta struct");
+        static_assert(std::is_same<shit::aggregate_element<1, Foo>::type, float>::value, "tuple_element of meta struct");
+        static_assert(std::is_same<shit::aggregate_element<2, Foo>::type, array<int,4>>::value, "tuple_element of meta struct");
+        
         vector<tuple<char const *, int, int, type_token>> info;
             
-        each_field_metadata<Foo, type_token_traits>([&](char const * name,
-                                                      int size,
-                                                      int offset,
-                                                      type_token token) {
+        shit::each_field_metadata<Foo, type_token_traits>([&](char const * name,
+                                                              int size,
+                                                              int offset,
+                                                              type_token token) {
             info.push_back(make_tuple(name, size, offset, token));
         });
             
@@ -66,17 +72,29 @@ namespace shit { namespace test {
         };
             
         Bar bar;
+        const Bar cbar{3, 4.0f, 5};
             
-        each_field(bar, fill());
+        shit::each_field(bar, fill());
         assert(bar.foo == 0);
         assert(bar.bar == 1.0f);
         assert(bar.bas == 2);
+        
+        assert(shit::get<0>(bar) == 0);
+        assert(shit::get<1>(bar) == 1.0f);
+        assert(shit::get<2>(bar) == 2);
+        assert(shit::get<0>(cbar) == 3);
+        assert(shit::get<1>(cbar) == 4.0f);
+        assert(shit::get<2>(cbar) == 5);
+        assert(shit::get<0>(Bar{7, 8.0f, 9}) == 7);
+        assert(shit::get<1>(Bar{7, 8.0f, 9}) == 8.0f);
+        assert(shit::get<2>(Bar{7, 8.0f, 9}) == 9);
     }
-}}
+    
+}
 
 void test_struct_meta()
 {
-    using namespace shit::test;
+    using namespace shit_test;
     test_each_field_metadata();
     test_each_field();
 }
