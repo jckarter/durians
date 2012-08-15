@@ -15,6 +15,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <shit/enum_meta.hpp>
 #include <shit/misc.hpp>
 
 namespace shit {
@@ -280,7 +281,7 @@ namespace shit {
             }
         };
 
-        template<typename T, typename NN>
+        template<typename T, typename NN = integers<std::tuple_size<T>::value>>
         struct tuple_print_traits;
         
         template<typename T, size_t...NN>
@@ -291,27 +292,32 @@ namespace shit {
                                                             typename internal::format_chars<typename std::tuple_element<NN, T>::type>::chars...>::type>
                               
         {};
-     
-        template<typename T, typename Size = std::tuple_size<T>>
-        struct enable_if_tuple : Size {
-            using type = void;
-        };
     }
     
     template<typename...T>
     struct print_traits<std::tuple<T...>>
-    : internal::tuple_print_traits<std::tuple<T...>, integers<sizeof...(T)>>
+    : internal::tuple_print_traits<std::tuple<T...>>
     {};
 
     template<typename T, typename U>
     struct print_traits<std::pair<T, U>>
-    : internal::tuple_print_traits<std::pair<T, U>, integers<2>>
+    : internal::tuple_print_traits<std::pair<T, U>>
     {};
     
     template<typename T, size_t N>
     struct print_traits<std::array<T, N>>
-    : internal::tuple_print_traits<std::array<T, N>, integers<N>>
+    : internal::tuple_print_traits<std::array<T, N>>
     {};
+    
+    template<typename T>
+    struct print_traits<T, typename std::enable_if<std::is_enum<T>::value>::type> {
+        static constexpr char format_string[] = "%s";
+        static constexpr size_t format_arg_count = 1;
+        
+        static char const *format_arg(T value, format_arg_t<0>) {
+            return enum_member_name(value);
+        }
+    };
     
     template<typename...T>
     inline void print(T &&...args)

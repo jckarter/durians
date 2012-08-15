@@ -6,6 +6,8 @@
 //  Copyright (c) 2012 Durian Software. MIT license.
 //
 
+#include <shit/enum_meta.hpp>
+//#include <shit/struct_meta.hpp>
 #include <shit/print.hpp>
 #undef NDEBUG
 #include <cassert>
@@ -28,6 +30,20 @@ struct bluh {
     static constexpr char format_string[] = "bluh";
     static constexpr size_t format_arg_count = 0;
 };
+
+#define META_MEMBERS_meta_enum(x) \
+    x(foo, 0) \
+    x(bar, 1) \
+    x(bas, 2)
+META_ENUM_CLASS(meta_enum)
+
+/*
+#define META_FIELDS_meta_struct(x) \
+    x(foo, int) \
+    x(bar, double) \
+    x(bas, char)
+META_STRUCT(meta_struct)
+*/
 
 void test_print()
 {
@@ -72,4 +88,26 @@ void test_print()
                 "literal cstring string\n"
                 "{42, 63.5} {1, 2, 3, 4} {52, 73.5}\n"
                 "\n");
+    
+    strprintln(s,
+               meta_enum::foo, space, meta_enum::bar, space, meta_enum::bas);
+    
+    assert(s == "1 2 3 4.5\n"
+                "{x=44, y=55.5} bluh\n"
+                "literal cstring string\n"
+                "{42, 63.5} {1, 2, 3, 4} {52, 73.5}\n"
+                "\n"
+                "foo bar bas\n");
+/*
+    strprintln(s,
+               meta_struct{7, 6.5, '4'});
+    
+    assert(s == "1 2 3 4.5\n"
+                "{x=44, y=55.5} bluh\n"
+                "literal cstring string\n"
+                "{42, 63.5} {1, 2, 3, 4} {52, 73.5}\n"
+                "\n"
+                "foo bar bas\n"
+                "{7, 6.5, 4}\n");
+ */
 }
