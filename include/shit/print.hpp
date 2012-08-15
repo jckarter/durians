@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <shit/enum_meta.hpp>
 #include <shit/misc.hpp>
+#include <shit/struct_meta.hpp>
 
 namespace shit {
     template<char...c>
@@ -62,8 +63,13 @@ namespace shit {
 
     template<size_t> struct format_arg_t {};
     
-    template<> struct print_traits<signed char> {
+    template<> struct print_traits<char> {
         static constexpr char format_string[] = "%c";
+        static constexpr size_t format_arg_count = 1;
+        static int format_arg(signed char x, format_arg_t<0>) { return x; }
+    };
+    template<> struct print_traits<signed char> {
+        static constexpr char format_string[] = "%d";
         static constexpr size_t format_arg_count = 1;
         static int format_arg(signed char x, format_arg_t<0>) { return x; }
     };
@@ -88,9 +94,9 @@ namespace shit {
         static long long format_arg(long long x, format_arg_t<0>) { return x; }
     };
     template<> struct print_traits<unsigned char> {
-        static constexpr char format_string[] = "%c";
+        static constexpr char format_string[] = "%u";
         static constexpr size_t format_arg_count = 1;
-        static int format_arg(unsigned char x, format_arg_t<0>) { return x; }
+        static unsigned format_arg(unsigned char x, format_arg_t<0>) { return x; }
     };
     template<> struct print_traits<unsigned short> {
         static constexpr char format_string[] = "%u";
@@ -188,11 +194,11 @@ namespace shit {
         template<typename T, size_t...NN>
         struct format_chars<T, values<size_t, NN...>>
         {
-            using chars = string_constant<print_traits<T>::format_string[NN]...>;
+            using type = string_constant<print_traits<T>::format_string[NN]...>;
         };
 
         template<typename...T>
-        struct format_string : concat_string_constant<typename format_chars<T>::chars...> {};
+        struct format_string : concat_string_constant<typename format_chars<T>::type...> {};
         
         template<size_t N, typename If, typename...T>
         struct format_arg;
@@ -202,7 +208,8 @@ namespace shit {
         {
             template<typename U, typename...UU>
             static auto get(U &&arg, UU &&...)
-            S_AUTO(print_traits<T>::format_arg(std::forward<U>(arg), format_arg_t<N>()))
+            -> decltype(print_traits<T>::format_arg(std::forward<U>(arg), format_arg_t<N>()))
+            { return print_traits<T>::format_arg(std::forward<U>(arg), format_arg_t<N>()); }
         };
         
         template<size_t N, typename T, typename...TT>
@@ -273,27 +280,28 @@ namespace shit {
             static constexpr char format_string[] = {'{', c..., '}', '\0'};
             static constexpr size_t format_arg_count = sum(print_traits<T>::format_arg_count...);
             
-            template<size_t M>
-            static auto format_arg(std::tuple<T...> const &t, format_arg_t<M>)
-            -> decltype(internal::format_arg<M, void, T...>::get(std::get<N>(t)...))
+            template<typename Agg, size_t M>
+            static auto format_arg(Agg const &t, format_arg_t<M>)
+            -> decltype(internal::format_arg<M, void, T...>::get(get<N>(t)...))
             {
-                return internal::format_arg<M, void, T...>::get(std::get<N>(t)...);
+                return internal::format_arg<M, void, T...>::get(get<N>(t)...);
             }
         };
 
-        template<typename T, typename NN = integers<std::tuple_size<T>::value>>
+        template<typename T, typename NN = integers<aggregate_size<T>::value>>
         struct tuple_print_traits;
         
         template<typename T, size_t...NN>
         struct tuple_print_traits<T, values<size_t, NN...>>
-        : _tuple_print_traits<types<typename std::tuple_element<NN, T>::type...>,
+        : _tuple_print_traits<types<typename aggregate_element<NN, T>::type...>,
                               values<size_t, NN...>,
                               typename join_string_constant<string_constant<',', ' '>,
-                                                            typename internal::format_chars<typename std::tuple_element<NN, T>::type>::chars...>::type>
+                                                            typename internal::format_chars<typename aggregate_element<NN, T>::type>::type...>::type>
                               
         {};
     }
     
+    /*
     template<typename...T>
     struct print_traits<std::tuple<T...>>
     : internal::tuple_print_traits<std::tuple<T...>>
@@ -308,6 +316,10 @@ namespace shit {
     struct print_traits<std::array<T, N>>
     : internal::tuple_print_traits<std::array<T, N>>
     {};
+     */
+    template<typename T>
+    struct print_traits<T, typename std::enable_if<is_aggregate<T>::value>::type>
+    : internal::tuple_print_traits<T> {};
     
     template<typename T>
     struct print_traits<T, typename std::enable_if<std::is_enum<T>::value>::type> {

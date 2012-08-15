@@ -7,7 +7,7 @@
 //
 
 #include <shit/enum_meta.hpp>
-//#include <shit/struct_meta.hpp>
+#include <shit/struct_meta.hpp>
 #include <shit/print.hpp>
 #undef NDEBUG
 #include <cassert>
@@ -37,13 +37,11 @@ struct bluh {
     x(bas, 2)
 META_ENUM_CLASS(meta_enum)
 
-/*
 #define META_FIELDS_meta_struct(x) \
     x(foo, int) \
     x(bar, double) \
     x(bas, char)
 META_STRUCT(meta_struct)
-*/
 
 void test_print()
 {
@@ -98,7 +96,17 @@ void test_print()
                 "{42, 63.5} {1, 2, 3, 4} {52, 73.5}\n"
                 "\n"
                 "foo bar bas\n");
-/*
+
+    strprintln(s, 'x', space, int8_t(0), space, uint8_t(0));
+
+    assert(s == "1 2 3 4.5\n"
+                "{x=44, y=55.5} bluh\n"
+                "literal cstring string\n"
+                "{42, 63.5} {1, 2, 3, 4} {52, 73.5}\n"
+                "\n"
+                "foo bar bas\n"
+                "x 0 0\n");
+
     strprintln(s,
                meta_struct{7, 6.5, '4'});
     
@@ -108,6 +116,6 @@ void test_print()
                 "{42, 63.5} {1, 2, 3, 4} {52, 73.5}\n"
                 "\n"
                 "foo bar bas\n"
+                "x 0 0\n"
                 "{7, 6.5, 4}\n");
- */
 }
