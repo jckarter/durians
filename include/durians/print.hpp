@@ -59,6 +59,17 @@ namespace durians {
         using type = string_constant<>;
     };
     
+    namespace internal {
+        template<char c>
+        struct escaped_char { using type = string_constant<c>; };
+        
+        template<>
+        struct escaped_char<'%'> { using type = string_constant<'%', '%'>; };
+        
+        template<char...c>
+        using escape_string_constant = concat_string_constant<typename escaped_char<c>::type...>;
+    }
+    
     template<typename T, typename If = void> struct print_traits;
 
     template<size_t> struct format_arg_t {};
@@ -142,11 +153,19 @@ namespace durians {
     template<size_t N> struct print_traits<char const [N]> : print_traits<char const *> {};
     template<size_t N> struct print_traits<char[N]> : print_traits<char const *> {};    
 
-    // fixme escape %
-    template<char...c> struct print_traits<string_constant<c...>> {
-        static constexpr char format_string[] = {c..., '\0'};
-        static constexpr size_t format_arg_count = 0;
+    namespace internal {
+        template<typename T> struct string_constant_print_traits;
+        template<char...c>
+        struct string_constant_print_traits<string_constant<c...>> {
+            static constexpr char format_string[] = {c..., '\0'};
+            static constexpr size_t format_arg_count = 0;
+        };
     };
+
+    // fixme escape %
+    template<char...c> struct print_traits<string_constant<c...>>
+    : internal::string_constant_print_traits<typename internal::escape_string_constant<c...>::type>
+    {};
             
     template<typename T>
     struct print_traits<T&> : print_traits<T> {};
@@ -301,22 +320,6 @@ namespace durians {
         {};
     }
     
-    /*
-    template<typename...T>
-    struct print_traits<std::tuple<T...>>
-    : internal::tuple_print_traits<std::tuple<T...>>
-    {};
-
-    template<typename T, typename U>
-    struct print_traits<std::pair<T, U>>
-    : internal::tuple_print_traits<std::pair<T, U>>
-    {};
-    
-    template<typename T, size_t N>
-    struct print_traits<std::array<T, N>>
-    : internal::tuple_print_traits<std::array<T, N>>
-    {};
-     */
     template<typename T>
     struct print_traits<T, typename std::enable_if<is_aggregate<T>::value>::type>
     : internal::tuple_print_traits<T> {};
