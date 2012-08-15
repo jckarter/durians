@@ -10,6 +10,7 @@
 #define shit_misc_hpp
 
 #include <type_traits>
+#include <utility>
 
 #define _S_CAT(a, b) a##b
 #define S_CAT(a, b) _S_CAT(a,b)
@@ -19,6 +20,8 @@
 #else
 #define S_UNREACHABLE ::std::abort();
 #endif
+
+#define S_AUTO(...) -> decltype(__VA_ARGS__) { return __VA_ARGS__; }
 
 namespace shit {
     template<typename T>
@@ -69,40 +72,40 @@ namespace shit {
 
     namespace internal {
         template<size_t N, typename T, typename...UU>
-        struct index_of_type;
+        struct _index_of_type;
     
         template<size_t N, typename T, typename...UU>
-        struct index_of_type<N, T, T, UU...> : std::integral_constant<size_t, N> {};
+        struct _index_of_type<N, T, T, UU...> : std::integral_constant<size_t, N> {};
         
         template<size_t N, typename T, typename U, typename...UU>
-        struct index_of_type<N, T, U, UU...> : index_of_type<N+1, T, UU...> {};
+        struct _index_of_type<N, T, U, UU...> : _index_of_type<N+1, T, UU...> {};
 
         template<size_t N, typename...TT>
-        struct type_at;
+        struct _type_at;
         template<typename T, typename...TT>
-        struct type_at<0, T, TT...> {
+        struct _type_at<0, T, TT...> {
             using type = T;
         };
         template<size_t N, typename T, typename...TT>
-        struct type_at<N, T, TT...> : type_at<N-1, TT...> {};
+        struct _type_at<N, T, TT...> : _type_at<N-1, TT...> {};
     }
     
     template<typename T, typename...UU>
-    using index_of_type = internal::index_of_type<0, T, UU...>;
+    using index_of_type = internal::_index_of_type<0, T, UU...>;
 
     template<size_t N, typename...TT>
-    using type_at = typename internal::type_at<N, TT...>::type;
+    using type_at = typename internal::_type_at<N, TT...>::type;
     
     namespace internal {
         template<size_t N, size_t...NN>
-        struct integers : integers<N-1, N-1, NN...> { };
+        struct _integers : _integers<N-1, N-1, NN...> { };
         
         template<size_t...NN>
-        struct integers<0, NN...> { using values = values<size_t, NN...>; };
+        struct _integers<0, NN...> { using values = values<size_t, NN...>; };
     }
     
     template<size_t N>
-    using integers = typename internal::integers<N>::values;
+    using integers = typename internal::_integers<N>::values;
 }
 
 #endif
