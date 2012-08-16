@@ -39,6 +39,8 @@ namespace durians {
         }
     };
     
+#define S_STATIC_FUNCTION(f) ::durians::static_function<decltype(f), f>
+    
     template<typename...TT>
     struct types {};
     

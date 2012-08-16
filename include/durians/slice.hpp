@@ -69,7 +69,7 @@ namespace durians {
         
         template<typename U>
         basic_slice(basic_slice<U> const &s,
-                    std::enable_if<internal::is_const_of<T, U>::value> * = nullptr)
+                    typename std::enable_if<internal::is_const_of<T, U>::value>::type * = nullptr)
         : the_data(s.data()), the_size(s.size())
         {}
         
@@ -205,7 +205,7 @@ namespace durians {
         
         template<typename U>
         slice2d_iterator(slice2d_iterator<U> const &s,
-                         std::enable_if<internal::is_const_of<T, U>::value> * = nullptr)
+                         typename std::enable_if<internal::is_const_of<T, U>::value>::type * = nullptr)
         : item(*s), the_stride(s.stride())
         {}
 
@@ -294,7 +294,7 @@ namespace durians {
         
         template<typename U>
         basic_slice2d(basic_slice2d<U> const &s,
-                      std::enable_if<internal::is_const_of<T, U>::value> * = nullptr)
+                      typename std::enable_if<internal::is_const_of<T, U>::value>::type * = nullptr)
         : the_data(s.data()), the_width(s.width()), the_stride(s.stride()), the_height(s.height())
         {}
 

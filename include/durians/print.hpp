@@ -21,7 +21,7 @@
 
 namespace durians {
     // TODO:
-    // - need to support print_traits that construct a string to hold printed representation
+    // - need to support print_traits that construct a string or other type to hold printed representation
     // - need to support types that can't be printed using formatting strings (e.g.containers)
     // - genericize print target concept?
     template<char...c>
