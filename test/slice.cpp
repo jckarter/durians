@@ -97,10 +97,59 @@ static void test_string_slice_compare()
     assert(string_slice("asdf") == "asdf");
 }
 
+static void test_slice2d()
+{
+    int arr[] = {1,2,3,4,5,6,7,8,9,10,11,12};
+    slice2d<int> slice1(arr);
+    assert(slice1.size() == 1);
+    assert(slice1[0].size() == 12);
+    assert(slice1[0][0] == 1);
+    assert(slice1[0][11] == 12);
+    
+    slice2d<int> slice2(arr, 1);
+    assert(slice2.size() == 12);
+    assert(slice2[0].size() == 1);
+    assert(slice2[0][0] == 1);
+    assert(slice2[11][0] == 12);
+
+    slice2d<int> slice3(arr, 2);
+    assert(slice3.size() == 6);
+    assert(slice3[0].size() == 2);
+    assert(slice3[0][0] == 1);
+    assert(slice3[0][1] == 2);
+    assert(slice3[5][0] == 11);
+    assert(slice3[5][1] == 12);
+
+    slice2d<int> slice4(arr, 2, 3);
+    assert(slice4.size() == 4);
+    assert(slice4[0].size() == 2);
+    assert(slice4[0][0] == 1);
+    assert(slice4[0][1] == 2);
+    assert(slice4[3][0] == 10);
+    assert(slice4[3][1] == 11);
+
+    slice2d<int> slice5(arr, 2, 3, 3);
+    assert(slice5.size() == 3);
+    assert(slice5[0].size() == 2);
+    assert(slice5[0][0] == 1);
+    assert(slice5[0][1] == 2);
+    assert(slice5[2][0] == 7);
+    assert(slice5[2][1] == 8);
+
+    slice2d<int> slice6(arr+1, 2, 3, 3);
+    assert(slice6.size() == 3);
+    assert(slice6[0].size() == 2);
+    assert(slice6[0][0] == 2);
+    assert(slice6[0][1] == 3);
+    assert(slice6[2][0] == 8);
+    assert(slice6[2][1] == 9);
+}
+
 void test_slice()
 {
     test_make_slice();
     test_string_slice();
     test_string_slice_compare();
     test_slice_const_conversion();
+    test_slice2d();
 }

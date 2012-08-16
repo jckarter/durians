@@ -16,10 +16,20 @@
 #include <vector>
 
 namespace durians {
+    template<typename> class slice2d_iterator;
+    
+    namespace internal {
+        template<typename, typename> struct is_const_of : std::false_type {};
+        template<typename T>
+        struct is_const_of<T const, T> : std::true_type {};
+    }
+    
     template<typename T>
     class basic_slice {
         T *the_data;
         std::size_t the_size;
+        
+        friend class slice2d_iterator<T>;
     
     public:
         basic_slice() : the_data(nullptr), the_size(0) {}
@@ -59,8 +69,7 @@ namespace durians {
         
         template<typename U>
         basic_slice(basic_slice<U> const &s,
-                    typename std::enable_if<std::is_const<T>::value
-                                            && std::is_same<U, typename std::remove_const<T>::type>::value>::type * = nullptr)
+                    std::enable_if<internal::is_const_of<T, U>::value> * = nullptr)
         : the_data(s.data()), the_size(s.size())
         {}
         
@@ -176,177 +185,153 @@ namespace durians {
     inline bool operator>=(string_slice a, string_slice b) { return a.compare(b) >= 0; }
     inline bool operator> (string_slice a, string_slice b) { return a.compare(b) >  0; }
     
-    /*
-    
-    template<typename OpaqueT, typename T, T Deref(OpaqueT *, std::size_t)>
-    struct OpaqueIterator {
-        OpaqueT *ptr;
-        std::size_t isize;
+    template<typename T>
+    class slice2d_iterator {
+        basic_slice<T> item;
+        size_t the_stride;
 
+    public:
         typedef std::ptrdiff_t difference_type;
         typedef T value_type;
-        typedef value_type *pointer;
-        typedef value_type &reference;
+        typedef T *pointer;
+        typedef T &reference;
         typedef std::random_access_iterator_tag iterator_category;
-
-        OpaqueIterator() = default;
-        OpaqueIterator(OpaqueT *ptr, std::size_t size)
-        : ptr(ptr), isize(size)
+        
+        slice2d_iterator() = default;
+        slice2d_iterator(T *data, std::size_t size, std::size_t stride)
+        : item(data, size), the_stride(stride) {}
+        slice2d_iterator(T *data, std::size_t size)
+        : item(data, size), the_stride(size) {}
+        
+        template<typename U>
+        slice2d_iterator(slice2d_iterator<U> const &s,
+                         std::enable_if<internal::is_const_of<T, U>::value> * = nullptr)
+        : item(*s), the_stride(s.stride())
         {}
 
-#define _MEGA_COMPARE_OPERATOR(op) \
-    bool operator op(OpaqueIterator const &p) const { return ptr op p.ptr; }
+#define _S_COMPARE_OPERATOR(op) \
+    bool operator op(slice2d_iterator const &p) const { return item.data() op p.item.data(); }
+        
+        _S_COMPARE_OPERATOR(==)
+        _S_COMPARE_OPERATOR(!=)
+        _S_COMPARE_OPERATOR(<)
+        _S_COMPARE_OPERATOR(<=)
+        _S_COMPARE_OPERATOR(>=)
+        _S_COMPARE_OPERATOR(>)
+#undef _S_COMPARE_OPERATOR
 
-        _MEGA_COMPARE_OPERATOR(==)
-        _MEGA_COMPARE_OPERATOR(!=)
-        _MEGA_COMPARE_OPERATOR(<)
-        _MEGA_COMPARE_OPERATOR(<=)
-        _MEGA_COMPARE_OPERATOR(>=)
-        _MEGA_COMPARE_OPERATOR(>)
-#undef _MEGA_COMPARE_OPERATOR
-
-#define _MEGA_INCDEC_OPERATOR(op, arop) \
-    OpaqueIterator &operator op() { ptr arop isize; return *this; } \
-    OpaqueIterator operator op(int) { \
-        OpaqueIterator r = *this; \
-        ptr arop isize; \
+#define _S_INCDEC_OPERATOR(op, arop) \
+    slice2d_iterator &operator op() { item.the_data arop the_stride; return *this; } \
+    slice2d_iterator operator op(int) { \
+        slice2d_iterator r = *this; \
+        item.the_data arop the_stride; \
         return r; \
     }
-
-        _MEGA_INCDEC_OPERATOR(--, -=)
-        _MEGA_INCDEC_OPERATOR(++, +=)
-#undef _MEGA_INCDEC_OPERATOR
-
-#define _MEGA_MATH_OPERATOR(op) \
-    OpaqueIterator operator op(std::ptrdiff_t dist) const { \
-        return OpaqueIterator(ptr op (dist*isize), isize); \
-    }
-
-        _MEGA_MATH_OPERATOR(+)
-        _MEGA_MATH_OPERATOR(-)
-#undef _MEGA_MATH_OPERATOR
-
-#define _MEGA_COMPOUND_OPERATOR(op) \
-    OpaqueIterator &operator op(std::ptrdiff_t dist) { \
-        ptr op (dist*isize); \
+        _S_INCDEC_OPERATOR(--, -=)
+        _S_INCDEC_OPERATOR(++, +=)
+#undef _S_INCDEC_OPERATOR
+        
+#define _S_MATH_OPERATOR(op) \
+    slice2d_iterator operator op(std::ptrdiff_t dist) const { \
+        return slice2d_iterator(item.the_data op (dist*std::ptrdiff_t(the_stride)), item.the_size, stride); \
+    } \
+    slice2d_iterator &operator op##=(std::ptrdiff_t dist) { \
+        item.the_data op##= (dist*std::ptrdiff_t(the_stride)); \
         return *this; \
     }
-
-        _MEGA_COMPOUND_OPERATOR(+=)
-        _MEGA_COMPOUND_OPERATOR(-=)
-#undef _MEGA_COMPOUND_OPERATOR
-
-        std::ptrdiff_t operator-(OpaqueIterator const &p) const { return ptr - p.ptr; }
-
-        T operator*()  const { return Deref(ptr, isize); }
-        DerefWrapper<T> operator->() const { return DerefWrapper<T>(Deref(ptr, isize)); }
-        T operator[](std::ptrdiff_t i) const {
-            return Deref(ptr + i*isize, isize);
-        }
-    };
-
-    template<typename OpaqueT, typename T, T Deref(OpaqueT *, std::size_t)>
-    struct OpaqueArrayRef {
-        OpaqueT *data;
-        std::size_t isize, length;
-
-        OpaqueArrayRef() : data(nullptr), isize(0), length(0) {}
-        OpaqueArrayRef(const OpaqueArrayRef &) = default;
-
-        template<typename U>
-        OpaqueArrayRef(U &oneElt)
-        : data(reinterpret_cast<OpaqueT*>(&oneElt)), isize(sizeof(U)), length(1)
-        {}
-
-        template<typename U>
-        OpaqueArrayRef(std::vector<U> &vec)
-        : data(reinterpret_cast<OpaqueT*>(&vec[0])), isize(sizeof(U)), length(vec.size())
-        {}
-        // OpaqueArrayRef(U (&)[N])
-        // OpaqueArrayRef(SmallVectorImpl)
-        // OpaqueArrayRef(U *, U *)
-        // OpaqueArrayRef(U *, std::size_t)
-        OpaqueArrayRef(OpaqueT *data, std::size_t isize, std::size_t length)
-        : data(data), isize(isize), length(length)
-        {}
-
-        typedef OpaqueIterator<OpaqueT, T, Deref> iterator;
-        typedef std::size_t size_type;
-
-        iterator begin() const { return iterator(data, isize); }
-        iterator end() const { return iterator(data + isize*length, isize); }
-        bool empty() const { return length == 0; }
-        std::size_t size() const { return length; }
-
-        T front() const {
-            assert(!empty());
-            return Deref(data, isize);
-        }
-
-        T back() const {
-            assert(!empty());
-            return Deref(data + isize*(length-1), isize);
-        }
-
-        T operator[](std::size_t i) const {
-            assert(i < length);
-            return Deref(data + isize*i, isize);
-        }
-
-        bool equals(OpaqueArrayRef other) const {
-            if (isize != other.isize || length != other.length)
-                return false;
-            if (data == other.data)
-                return true;
-            for (std::size_t i = 0; i < length; ++i)
-                if ((*this)[i] != other[i])
-                    return false;
-            return true;
-        }
-        // slice
-    };
-
-    template<typename T>
-    struct Array2DRef : OpaqueArrayRef<T const, llvm::ArrayRef<T>, llvm::makeArrayRef<T>> {
-        typedef OpaqueArrayRef<T const, llvm::ArrayRef<T>, llvm::makeArrayRef<T>> super;
-
-        Array2DRef() : super(nullptr, 1, 0) {}
-        Array2DRef(T const *begin, std::size_t width, std::size_t height)
-        : super(begin, width, height)
-        {}
         
-        Array2DRef(llvm::ArrayRef<T> array, std::size_t span)
-        : super(array.data(), span, array.size() / span)
-        {}
-
-        Array2DRef(std::vector<T> const &vec, std::size_t span)
-        : super(vec.data(), span, vec.size() / span)
-        {}
+        _S_MATH_OPERATOR(+)
+        _S_MATH_OPERATOR(-)
+#undef _S_MATH_OPERATOR
+                
+        std::ptrdiff_t operator-(slice2d_iterator const &p) const {
+            return (item.data() - p.item.data())/std::ptrdiff_t(the_stride);
+        }
+        
+        basic_slice<T> operator*()  const { return item; }
+        basic_slice<T> const *operator->() const { return &item; }
+        
+        basic_slice<T> operator[](std::ptrdiff_t i) const {
+            return {item.data() + i*std::ptrdiff_t(the_stride), item.size()};
+        }
+        
+        T *data() const { return item.data(); }
+        std::size_t size() const { return item.size(); }
+        std::size_t stride() const { return the_stride; }
     };
     
     template<typename T>
-    llvm::MutableArrayRef<T> makeMutableArrayRef(T *begin, size_t size) {
-        return {begin, size};
-    }
+    class basic_slice2d
+    {
+        T *the_data;
+        std::size_t the_width, the_stride, the_height;
+    
+    public:
+        basic_slice2d() : the_data(nullptr), the_width(0), the_stride(0), the_height(0)
+        {}
+                
+        basic_slice2d(basic_slice<T> slice)
+        : the_data(slice.data()), the_width(slice.size()), the_stride(slice.size()), the_height(1)
+        {}
+        
+        basic_slice2d(basic_slice<T> slice, std::size_t width)
+        : the_data(slice.data()), the_width(width), the_stride(width), the_height(slice.size()/width)
+        {}
+
+        basic_slice2d(basic_slice<T> slice, std::size_t width, std::size_t stride)
+        : the_data(slice.data()), the_width(width), the_stride(stride), the_height(slice.size()/stride)
+        {}
+
+        basic_slice2d(basic_slice<T> slice, std::size_t width, std::size_t stride, std::size_t height)
+        : the_data(slice.data()), the_width(width), the_stride(stride), the_height(height)
+        {
+            assert(height*stride <= slice.size());
+        }
+
+        basic_slice2d(T *data, std::size_t width, std::size_t stride, std::size_t height)
+        : the_data(data), the_width(width), the_stride(stride), the_height(height)
+        {}
+        
+        template<typename U>
+        basic_slice2d(basic_slice2d<U> const &s,
+                      std::enable_if<internal::is_const_of<T, U>::value> * = nullptr)
+        : the_data(s.data()), the_width(s.width()), the_stride(s.stride()), the_height(s.height())
+        {}
+
+        using iterator = slice2d_iterator<T>;
+        using const_iterator = slice2d_iterator<T const>;
+        using size_type = std::size_t;
+        
+        iterator begin() const { return {the_data, the_width, the_stride}; }
+        iterator end() const { return {the_data + the_stride*the_height, the_width, the_stride}; }
+        const_iterator cbegin() const { return {the_data, the_width, the_stride}; }
+        const_iterator cend() const { return {the_data + the_stride*the_height, the_width, the_stride}; }
+        bool empty() const { return the_height == 0; }
+        std::size_t size() const { return the_height; }
+        std::size_t width() const { return the_width; }
+        std::size_t stride() const { return the_stride; }
+        std::size_t height() const { return the_height; }
+        
+        basic_slice<T> front() const {
+            assert(!empty());
+            return {the_data, the_width};
+        }
+        
+        basic_slice<T> back() const {
+            assert(!empty());
+            return {the_data + the_stride*(the_height-1), the_width};
+        }
+        
+        basic_slice<T> operator[](std::size_t i) const {
+            assert(i < the_height);
+            return {the_data + the_stride*i, the_width};
+        }
+    };
 
     template<typename T>
-    struct MutableArray2DRef : OpaqueArrayRef<T, llvm::MutableArrayRef<T>, makeMutableArrayRef<T>> {
-        typedef OpaqueArrayRef<T, llvm::MutableArrayRef<T>, makeMutableArrayRef<T>> super;
-        
-        MutableArray2DRef() : super(nullptr, 1, 0) {}
-        MutableArray2DRef(T *begin, std::size_t width, std::size_t height)
-        : super(begin, width, height)
-        {}
-        
-        MutableArray2DRef(llvm::MutableArrayRef<T> array, std::size_t span)
-        : super(array.data(), span, array.size() / span)
-        {}
-        
-        MutableArray2DRef(std::vector<T> &vec, std::size_t span)
-        : super(vec.data(), span, vec.size() / span)
-        {}
-    };
-     */
+    using slice2d = basic_slice2d<const T>;
+    template<typename T>
+    using mutable_slice2d = basic_slice2d<T>;
 }
 
 #endif

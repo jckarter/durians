@@ -20,6 +20,10 @@
 #include <durians/struct_meta.hpp>
 
 namespace durians {
+    // TODO:
+    // - need to support print_traits that construct a string to hold printed representation
+    // - need to support types that can't be printed using formatting strings (e.g.containers)
+    // - genericize print target concept?
     template<char...c>
     struct string_constant {
         static const char value[sizeof...(c)+1];
@@ -162,7 +166,6 @@ namespace durians {
         };
     };
 
-    // fixme escape %
     template<char...c> struct print_traits<string_constant<c...>>
     : internal::string_constant_print_traits<typename internal::escape_string_constant<c...>::type>
     {};
