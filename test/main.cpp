@@ -21,5 +21,6 @@ int main()
     RUN_TEST(test_reftype);
     RUN_TEST(test_io);
     RUN_TEST(test_print);
+    RUN_TEST(test_packs);
     std::puts("ok");
 }

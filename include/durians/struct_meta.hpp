@@ -10,6 +10,7 @@
 #define durians_struct_meta_hpp
 
 #include <durians/misc.hpp>
+#include <durians/packs.hpp>
 #include <tuple>
 #include <type_traits>
 #include <utility>
