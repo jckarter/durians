@@ -33,12 +33,12 @@ namespace durians {
     void set_##propname(::durians::type<__VA_ARGS__>);
     
 #define S_DEFINE_SIMPLE_READER(T, propname, ...) \
-    ::durians::type<__VA_ARGS__> T::propname() { return $.propname; }
+    ::durians::type<__VA_ARGS__> T::propname() { return SELF.propname; }
 #define S_DEFINE_SIMPLE_WRITER(T, propname, ...) \
-    void T::mut::set_##propname(::durians::type<__VA_ARGS__> Q_value) { $.propname = Q_value; }
+    void T::mut::set_##propname(::durians::type<__VA_ARGS__> Q_value) { SELF.propname = Q_value; }
 
 #define S_DEFINE_IMPL_FORWARD(T, ret, func, types, names) \
-    ret T::func types { return $.func names; }
+    ret T::func types { return SELF.func names; }
     
     template<typename T>
     struct owner;
@@ -82,7 +82,7 @@ namespace durians {
         }
     }
     
-#define $ ::durians::internal::reftype_impl<Q_type>(*this)
+#define SELF ::durians::internal::reftype_impl<Q_type>(*this)
     
     template<typename T>
     struct owner : T::mut {
