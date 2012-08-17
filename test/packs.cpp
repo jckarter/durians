@@ -7,6 +7,7 @@
 //
 
 #include <durians/packs.hpp>
+#include <durians/misc.hpp>
 #include <type_traits>
 
 using namespace durians;
@@ -43,6 +44,19 @@ static_assert(!is_every_type<is_integral, float, void*, int()>::value,
               "is_every_type should return false if no type fits predicate");
 static_assert(is_every_type<is_integral>::value,
               "is_every_type should return true for empty type pack");
+
+template<size_t A, size_t B, size_t Limit>
+struct generate_fibonacci
+{
+    static const size_t value = A;
+    using type = size_t;
+    using next = typename conditional<(B < Limit),
+        generate_fibonacci<B, A+B, Limit>,
+        end_generate_values<size_t>>::type;
+};
+
+static_assert(only_same<generate_values<generate_fibonacci<1, 1, 10>>,
+                        values<size_t, 1, 1, 2, 3, 5, 8>>::value, "generate_values");
 
 void test_packs()
 {

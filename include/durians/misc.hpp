@@ -39,6 +39,11 @@ namespace durians {
         }
     };
     
+    template<typename A, typename B>
+    struct only_same;
+    template<typename A>
+    struct only_same<A, A> : std::true_type {};
+    
 #define S_STATIC_FUNCTION(f) ::durians::static_function<decltype(f), f>
 }
 

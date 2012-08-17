@@ -79,6 +79,41 @@ namespace durians {
     
     template<size_t N>
     using integers = typename internal::_integers<N>::values;
+    
+    template<typename T>
+    struct end_generate_values { using type = T; };
+    struct end_generate_types {};
+    
+    namespace internal {
+        template<typename Generator, typename Generator::type...vv>
+        struct _generate_values : _generate_values<typename Generator::next,
+                                                   vv...,
+                                                   Generator::value>
+        {};
+        
+        template<typename T, T...vv>
+        struct _generate_values<end_generate_values<T>, vv...>
+        {
+            using values = values<T, vv...>;
+        };
+        
+        template<typename Generator, typename...TT>
+        struct _generate_types : _generate_types<typename Generator::next,
+                                                 TT...,
+                                                 typename Generator::type>
+        {};
+        
+        template<typename...TT>
+        struct _generate_types<end_generate_types, TT...>
+        {
+            using types = types<TT...>;
+        };
+    }
+    
+    template<typename T>
+    using generate_values = typename internal::_generate_values<T>::values;
+    template<typename T>
+    using generate_types = typename internal::_generate_types<T>::types;
 }
 
 #endif
