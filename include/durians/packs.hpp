@@ -80,40 +80,63 @@ namespace durians {
     template<size_t N>
     using integers = typename internal::_integers<N>::values;
     
-    template<typename T>
-    struct end_generate_values { using type = T; };
-    struct end_generate_types {};
-    
     namespace internal {
-        template<typename Generator, typename Generator::type...vv>
+        template<typename Generator, typename If, typename Generator::type...vv>
         struct _generate_values : _generate_values<typename Generator::next,
+                                                   void,
                                                    vv...,
                                                    Generator::value>
         {};
         
-        template<typename T, T...vv>
-        struct _generate_values<end_generate_values<T>, vv...>
+        template<typename Generator, typename Generator::type...vv>
+        struct _generate_values<Generator,
+            typename std::enable_if<Generator::end>::type,
+            vv...>
         {
-            using values = values<T, vv...>;
+            using values = values<typename Generator::type, vv...>;
         };
         
-        template<typename Generator, typename...TT>
+        template<typename Generator, typename If, typename...TT>
         struct _generate_types : _generate_types<typename Generator::next,
+                                                 void,
                                                  TT...,
                                                  typename Generator::type>
         {};
         
-        template<typename...TT>
-        struct _generate_types<end_generate_types, TT...>
+        template<typename Generator, typename...TT>
+        struct _generate_types<Generator,
+            typename std::enable_if<Generator::end>::type,
+            TT...>
         {
             using types = types<TT...>;
         };
     }
     
     template<typename T>
-    using generate_values = typename internal::_generate_values<T>::values;
+    using generate_values = typename internal::_generate_values<T, void>::values;
     template<typename T>
-    using generate_types = typename internal::_generate_types<T>::types;
+    using generate_types = typename internal::_generate_types<T, void>::types;
+    
+    template<typename T = void>
+    struct end_generator {
+        using type = T;
+        static constexpr bool end = true;
+    };
+    
+    template<typename T, T Value, typename Next, bool End = false>
+    struct value_generator {
+        using type = T;
+        using next = Next;
+        static constexpr T value = Value;
+        static constexpr bool end = End;
+    };
+    
+    template<typename T, typename Next, bool End = false>
+    struct type_generator {
+        using type = T;
+        using next = Next;
+        static constexpr bool end = End;
+    };
 }
 
 #endif

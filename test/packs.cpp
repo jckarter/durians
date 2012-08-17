@@ -47,16 +47,24 @@ static_assert(is_every_type<is_integral>::value,
 
 template<size_t A, size_t B, size_t Limit>
 struct generate_fibonacci
+: value_generator<size_t, A, generate_fibonacci<B, A+B, Limit>, (A >= Limit)>
 {
-    static const size_t value = A;
-    using type = size_t;
-    using next = typename conditional<(B < Limit),
-        generate_fibonacci<B, A+B, Limit>,
-        end_generate_values<size_t>>::type;
 };
 
-static_assert(only_same<generate_values<generate_fibonacci<1, 1, 10>>,
-                        values<size_t, 1, 1, 2, 3, 5, 8>>::value, "generate_values");
+template<size_t A, size_t B, size_t Limit>
+struct generate_fibonacci_arrays
+: type_generator<std::array<int, A>, generate_fibonacci_arrays<B, A+B, Limit>, (A >= Limit)>
+{
+};
+
+
+static_assert(is_same<generate_values<generate_fibonacci<1, 1, 10>>,
+                      values<size_t, 1, 1, 2, 3, 5, 8>>::value, "generate_values");
+static_assert(is_same<generate_types<generate_fibonacci_arrays<1, 1, 5>>,
+                      types<std::array<int, 1>,
+                            std::array<int, 1>,
+                            std::array<int, 2>,
+                            std::array<int, 3>>>::value, "generate_types");
 
 void test_packs()
 {
