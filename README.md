@@ -75,14 +75,14 @@ This header provides a thin wrapper over `cstdio`.
 
 This header defines a class template `maybe<T>` for representing optional values. `maybe<T>` is
 laid out like a `struct { bool; T; };`; the `T` is uninitialized if no value is present. `T`
-must be movable but does not need to be copyable or default-constructible. `maybe<T>` is always
-movable, move-assignable, and default-constructible, and is copyable and copy-assignable if `T` is.
-`maybe<T>` is standard-layout if `T` is standard-layout, and is trivially copy/move constructible,
+does not need to be movable, copyable, or default-constructible. `maybe<T>` is always
+default-constructible, and is movable, copyable, move-assignment or copy-assignable when `T` is.
+`maybe<T>` is standard-layout if `T` is standard-layout, and is trivially copyable, movable,
 assignable, and destructible if `T` is. `maybe<T>` is however never trivial because it defines
 a nontrivial default constructor.
 
 A specialization is provided for `maybe<T&>`, which is represented by a `T*` with `nullptr`
-representing no value. `maybe<T&>` is always standard-layout and trivially copy/move constructible,
+representing no value. `maybe<T&>` is always standard-layout and trivially copyable, movable,
 assignable, and destructible.
 
 In addition to the standard value semantics methods, `maybe` types provide the following methods:
@@ -90,12 +90,16 @@ In addition to the standard value semantics methods, `maybe` types provide the f
 * `maybe<T>()` default-constructs a `maybe` containing no value.
 * `maybe<T>(T const &)` and `maybe<T>(T &&)` construct a `maybe` containing a value copied or moved
     from a `T`.
+* `maybe<T>{args...}` constructs a `maybe` containing the value `T{args...}`, which is emplaced
+    inside the `maybe` value.
 * `explicit operator bool` returns true if a `maybe` contains a value.
 * `operator*` returns a reference
     to the contained value; it is undefined if `operator*` is applied to a `maybe` containing no
     value.
 * `operator=(T const &)` and `operator=(T &&)` assign a new value to the `maybe`.
     `operator=(std::nullptr_t)` discards the value inside a `maybe`, if any.
+    The method `emplace(args...)` constructs the value `T{args...}` inside the maybe, destroying
+    the current value if any.
 
 The following top-level functions are provided for working with `maybe` types:
 
