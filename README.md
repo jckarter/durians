@@ -437,3 +437,17 @@ the number of fields in `T`, and `typename aggregate_element<N, T>::type` is ali
 of the `N`th field in `T`. `get<N>(instance)` will give a reference to the `N`th field in `instance`.
 The type trait `is_aggregate<T>::value` is true if `aggregate_size`, `aggregate_element`, and
 `get` are valid for the type `T`.
+
+## durians/timing.hpp
+
+This header provides a couple of template functions for simple execution time measurement. These
+functions use `std::chrono::high_resolution_clock::now()` to measure time.
+
+* `time(D &duration, F &&f)` measures the time taken to execute `f()`, which is written to `duration`.
+    `duration` may be of any `std::chrono::duration` type. The result of `f()` is returned.
+    If `f()` throws an exception, the time taken to execute `f()` until the exception was thrown
+    is written to `duration`, and the exception is rethrown.
+* `log_time(char const *name, F &&f)` measures the time taken to execute `f()`, and prints it to
+    `stderr` with the label `name`. The result of `f()` is returned. If `f()` throws an exception,
+    the time taken to execute `f()` until the exception was thrown is printed, and the exception
+    is rethrown.
