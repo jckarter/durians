@@ -23,5 +23,6 @@ int main()
     RUN_TEST(test_print);
     RUN_TEST(test_packs);
     RUN_TEST(test_static_string);
+    RUN_TEST(test_timing);
     std::puts("ok");
 }
