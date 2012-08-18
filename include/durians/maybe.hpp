@@ -28,6 +28,17 @@ namespace durians {
     public:
         maybe() : present(false) {}
         maybe(T const &x) : present(true), value(x) {}
+        maybe(T &x) : present(true), value(x) {}
+        maybe(T &&x) : present(true), value(std::move(x)) {}
+        
+        maybe(maybe const &) = default;
+        maybe(maybe &) = default;
+        maybe(maybe &&) = default;
+        maybe &operator=(maybe const &) = default;
+        maybe &operator=(maybe &&) = default;
+        
+        template<typename...TT>
+        maybe(TT &&...args) : present(true), value{std::forward<TT>(args)...} {}
         
         maybe &operator=(T const &x) {
             present = true;
@@ -70,6 +81,7 @@ namespace durians {
         
     public:
         maybe() : present(false) {}
+        maybe(T &x) : present(true), value(x) {}
         maybe(T const &x) : present(true), value(x) {}
         maybe(T &&x) : present(true), value(std::move(x)) {}
         
@@ -79,11 +91,16 @@ namespace durians {
                 new (&value) T(x.value);
         }
         
+        maybe(maybe &x) : maybe(static_cast<maybe const&>(x)) {}
+        
         maybe(maybe &&x) : present(x.present)
         {
             if (present)
                 new (&value) T(std::move(x.value));
         }
+        
+        template<typename...TT>
+        maybe(TT &&...args) : present(true), value{std::forward<TT>(args)...} {}
         
         ~maybe() {
             if (present)

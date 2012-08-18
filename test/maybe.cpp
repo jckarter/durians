@@ -70,7 +70,7 @@ static void test_maybe_trivial()
     assert(just->x == 3);
     assert(just->y == 4.0f);
     
-    maybe<blub> just2 = blub{5, 6.0f};
+    maybe<blub> just2{5, 6.0f};
     just = just2;
     assert(just);
     assert(just->x == 5);
@@ -124,7 +124,7 @@ static void test_maybe_nontrivial()
     assert(just);
     assert((*just == vector<int>{4, 5}));
     
-    maybe<vector<int>> just2 = vector<int>{6,7,8};
+    maybe<vector<int>> just2{6,7,8};
     assert(just2);
     just = just2;
     assert(just == just2);
