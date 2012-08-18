@@ -3,7 +3,7 @@
 //  durians
 //
 //  Created by Joe Groff on 8/16/12.
-//  Copyright (c) 2012 Durian Software. All rights reserved.
+//  Copyright (c) 2012 Durian Software. MIT license.
 //
 
 #include <durians/io.hpp>
