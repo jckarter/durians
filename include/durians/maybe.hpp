@@ -168,7 +168,7 @@ namespace durians {
     
     template<typename T>
     maybe<typename std::remove_reference<T>::type>
-    just(T &&value) { return {value}; }
+    just(T &&value) { return {std::forward<T>(value)}; }
     
     template<typename Maybe, typename IfJust, typename IfNothing>
     auto when(Maybe &&m, IfJust &&if_just, IfNothing &&if_nothing)
