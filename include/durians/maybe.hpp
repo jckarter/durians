@@ -40,6 +40,13 @@ namespace durians {
         template<typename...TT>
         maybe(TT &&...args) : present(true), value{std::forward<TT>(args)...} {}
         
+        template<typename...TT>
+        void emplace(TT &&...args)
+        {
+            present = true;
+            new (&value) T{std::forward<TT>(args)...};
+        }
+        
         maybe &operator=(T const &x) {
             present = true;
             value = x;
@@ -145,6 +152,15 @@ namespace durians {
                 value.~T();
             present = false;
             return *this;
+        }
+        
+        template<typename...TT>
+        void emplace(TT &&...args)
+        {
+            if (present)
+                value.~T();
+            present = true;
+            new (&value) T{std::forward<TT>(args)...};
         }
         
         explicit operator bool() const { return present; }

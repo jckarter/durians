@@ -70,6 +70,11 @@ static void test_maybe_trivial()
     assert(just->x == 3);
     assert(just->y == 4.0f);
     
+    just.emplace(33, 44.0f);
+    assert(just);
+    assert(just->x == 33);
+    assert(just->y == 44.0f);
+    
     maybe<blub> just2{5, 6.0f};
     just = just2;
     assert(just);
@@ -90,6 +95,11 @@ static void test_maybe_trivial()
     just = nullptr;
     assert(!just);
     assert(just == nothing);
+    
+    just.emplace(55, 66.0f);
+    assert(just);
+    assert(just->x == 55);
+    assert(just->y == 66.0f);
     
     maybe<blub> just3 = just2;
     assert(just3);
@@ -124,6 +134,10 @@ static void test_maybe_nontrivial()
     assert(just);
     assert((*just == vector<int>{4, 5}));
     
+    just.emplace(44, 55, 66);
+    assert(just);
+    assert((*just == vector<int>{44, 55, 66}));
+    
     maybe<vector<int>> just2{6,7,8};
     assert(just2);
     just = just2;
@@ -139,6 +153,12 @@ static void test_maybe_nontrivial()
     just = just2;
     assert(just);
     assert(just == just2);
+    
+    just = nothing;
+    assert(!just);
+    just.emplace(77, 88, 99);
+    assert(just);
+    assert((*just == vector<int>{77, 88, 99}));
     
     maybe<vector<int>> just3 = just2;
     assert(just3);
