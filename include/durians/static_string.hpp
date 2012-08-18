@@ -40,6 +40,11 @@ namespace durians {
         {
             return nodes == o.nodes && node == o.node && i == o.i;
         }
+
+        constexpr bool operator!=(static_string_iterator const &o) const
+        {
+            return nodes != o.nodes || node != o.node || i != o.i;
+        }
     };
     
     namespace internal {
@@ -57,12 +62,27 @@ namespace durians {
             : *begin1 < *begin2
             ? -1 : 1;
         }
+        
+        constexpr size_t find_char_in_static_string(static_string_iterator begin,
+                                                    static_string_iterator end,
+                                                    char c,
+                                                    size_t i)
+        {
+            return begin == end
+            ? ~size_t(0)
+            : c == *begin
+            ? i
+            : find_char_in_static_string(begin.next(), end, c, i+1);
+        }
     }
     
     template<size_t N = 1>
     struct static_string {
         using node = static_string_node;
         using iterator = static_string_iterator;
+        using size_type = size_t;
+        
+        static const size_t npos = ~size_t(0);
         
         node nodes[N];
         
@@ -179,28 +199,63 @@ namespace durians {
         constexpr bool operator>(static_string<M> const &o) const { return compare(o) > 0; }
         template<size_t M>
         constexpr bool operator>=(static_string<M> const &o) const { return compare(o) >= 0; }
+        
+        constexpr size_t find(char c) const {
+            return internal::find_char_in_static_string(begin(), end(), c, 0);
+        }
     };
     
-    static_assert(static_string<>("asdf").size() == 4, "single string");
-    static_assert((static_string<>("asdf") + "hjkl").size() == 8, "catted string");
-    static_assert((static_string<>("asdf") + "hjkl").slice(2, 4).size() == 4, "sliced string");
+    namespace internal {
+        template<static_string_iterator const &Begin, static_string_iterator const &End,
+                 typename If = void>
+        struct gen_static_string_char;
+        
+        template<static_string_iterator const &Begin, static_string_iterator const &End>
+        struct gen_static_string_char<Begin, End,
+                                      typename std::enable_if<Begin != End>::type>
+        {
+            using type = char;
+            static constexpr static_string_iterator nexti = Begin.next();
+            static constexpr char value = *Begin;
+            using next = gen_static_string_char<nexti, End>;
+        };
+        
+        template<static_string_iterator const &Begin, static_string_iterator const &End>
+        struct gen_static_string_char<Begin, End,
+                                      typename std::enable_if<Begin == End>::type>
+        {
+            using type = char;
+            static constexpr bool end = true;
+        };
+        
+        template<static_string_iterator const &Begin, static_string_iterator const &End,
+                 typename CC = generate_values<gen_static_string_char<Begin, End>>>
+        struct static_string_literal_storage;
+        
+        template<static_string_iterator const &Begin, static_string_iterator const &End,
+                 char...CC>
+        struct static_string_literal_storage<Begin, End, values<char, CC...>>
+        {
+            static const char value[sizeof...(CC)+1];
+        };
+        
+        template<static_string_iterator const &Begin, static_string_iterator const &End,
+                 char...CC>
+        const char static_string_literal_storage<Begin, End, values<char, CC...>>
+        ::value[sizeof...(CC)+1] = {CC..., 0};
+    }
     
-    static_assert(static_string<>("asdf")[0] == 'a', "[]");
-    static_assert(static_string<>("asdf")[3] == 'f', "[]");
-    static_assert((static_string<>("asdf") + "hjkl")[0] == 'a', "[]");
-    static_assert((static_string<>("asdf") + "hjkl")[3] == 'f', "[]");
-    static_assert((static_string<>("asdf") + "hjkl")[4] == 'h', "[]");
-    static_assert((static_string<>("asdf") + "hjkl")[7] == 'l', "[]");
-    static_assert((static_string<>("asdf") + "hjkl").slice(2,4)[0] == 'd', "[]");
-    static_assert((static_string<>("asdf") + "hjkl").slice(2,4)[3] == 'j', "[]");
+    template<typename T>
+    struct static_string_literal {
+        static constexpr static_string_iterator begin = T::value.begin();
+        static constexpr static_string_iterator end = T::value.end();
+        
+        static char const * const value;
+    };
     
-    static_assert(static_string<>("asdf") == static_string<>("asdf"), "==");
-    static_assert(static_string<>("asdf") == static_string<>("as") + "df", "==");
-    static_assert(static_string<>("asdf") != static_string<>("asdg"), "!=");
-    static_assert(static_string<>("asdf") < static_string<>("asdg"), "!=");
-    static_assert(static_string<>("asd") < static_string<>("asdg"), "!=");
-    static_assert(static_string<>("asdf") > static_string<>("asde"), "!=");
-    static_assert(static_string<>("asdf") > static_string<>("asd"), "!=");
+    template<typename T>
+    char const * const static_string_literal<T>::value
+        = internal::static_string_literal_storage<begin, end>::value;
 }
 
 #endif
