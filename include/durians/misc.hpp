@@ -16,9 +16,9 @@
 #define S_CAT(a, b) _S_CAT(a,b)
 
 #ifdef NDEBUG
-#define S_UNREACHABLE assert(false);
+#define S_UNREACHABLE assert(false)
 #else
-#define S_UNREACHABLE ::std::abort();
+#define S_UNREACHABLE ::std::abort()
 #endif
 
 #define S_AUTO(...) -> decltype(__VA_ARGS__) { return __VA_ARGS__; }
@@ -38,13 +38,13 @@ namespace durians {
             return f(static_cast<AA>(args)...);
         }
     };
-    
+
+#define S_STATIC_FUNCTION(f) ::durians::static_function<decltype(f), f>
+
     template<typename A, typename B>
     struct only_same;
     template<typename A>
-    struct only_same<A, A> : std::true_type {};
-    
-#define S_STATIC_FUNCTION(f) ::durians::static_function<decltype(f), f>
+    struct only_same<A, A> : std::true_type {};    
 }
 
 #endif

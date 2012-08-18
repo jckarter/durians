@@ -35,7 +35,7 @@ static_assert(!is_any_type<is_integral>::value,
               "is_any_type should return false for empty type pack");
 
 static_assert(!is_every_type<is_integral, int, float, void*>::value,
-              "is_every_type should return true if any type doesn't fit predicate");
+              "is_every_type should return false if any type doesn't fit predicate");
 static_assert(!is_every_type<is_integral, int, long, void*>::value,
               "is_every_type should return false if any type doesn't fit predicate");
 static_assert(is_every_type<is_integral, int, long, short>::value,

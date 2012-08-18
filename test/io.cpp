@@ -45,4 +45,5 @@ void test_io()
 {
     test_unique_file();
     test_shared_file();
+    test_read_write();
 }

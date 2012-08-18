@@ -9,6 +9,7 @@
 #ifndef durians_slice_hpp
 #define durians_slice_hpp
 
+#include <array>
 #include <cassert>
 #include <cstring>
 #include <initializer_list>
@@ -41,6 +42,15 @@ namespace durians {
         {}
         basic_slice(std::vector<typename std::remove_cv<T>::type> const &vec)
         : the_data(vec.data()), the_size(vec.size())
+        {}
+        
+        template<size_t N>
+        basic_slice(std::array<T, N> &arr)
+        : the_data(arr.data()), the_size(N)
+        {}
+        template<size_t N>
+        basic_slice(std::array<typename std::remove_cv<T>::type, N> const &arr)
+        : the_data(arr.data()), the_size(N)
         {}
         
         template<std::size_t N>
@@ -154,7 +164,7 @@ namespace durians {
         }
         string_slice(char const *c_str) : slice<char>((assert(c_str), c_str), strlen(c_str)) {}
         template<std::size_t N>
-        string_slice(char const (&lit)[N]) : slice<char>(lit, N) {}
+        string_slice(char const (&lit)[N]) : slice<char>(lit, N-1) {}
         string_slice(std::string const &s) : slice<char>(s.data(), s.size()) {}
         
         bool equals(string_slice other) const {

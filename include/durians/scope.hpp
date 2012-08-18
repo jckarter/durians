@@ -24,11 +24,11 @@ namespace durians {
     scope_exit<F> make_scope_exit(F &&f) { return {f}; }
     
 #define SCOPE_EXIT(block) auto S_CAT(Q_scope_, __LINE__) = \
-    ::durians::make_scope_exit([&]{ block })
+    ::durians::make_scope_exit([&]{ block; })
 #define SCOPE_FAILURE(block) auto S_CAT(Q_scope_, __LINE__) = \
-    ::durians::make_scope_exit([&]{ if (::std::uncaught_exception()) { block } })
+    ::durians::make_scope_exit([&]{ if (::std::uncaught_exception()) { block; } })
 #define SCOPE_SUCCESS(block) auto S_CAT(Q_scope_, __LINE__) = \
-    ::durians::make_scope_exit([&]{ if (!::std::uncaught_exception()) { block } })
+    ::durians::make_scope_exit([&]{ if (!::std::uncaught_exception()) { block; } })
 }
 
 #endif
