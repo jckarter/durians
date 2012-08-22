@@ -200,6 +200,25 @@ namespace durians {
         template<size_t M>
         constexpr bool operator>=(static_string<M> const &o) const { return compare(o) >= 0; }
         
+        template<size_t M>
+        constexpr bool operator==(char const (&s)[M]) const
+        { return compare(static_string<>(s)) == 0; }
+        template<size_t M>
+        constexpr bool operator!=(char const (&s)[M]) const
+        { return compare(static_string<>(s)) != 0; }
+        template<size_t M>
+        constexpr bool operator<(char const (&s)[M]) const
+        { return compare(static_string<>(s)) < 0; }
+        template<size_t M>
+        constexpr bool operator<=(char const (&s)[M]) const
+        { return compare(static_string<>(s)) <= 0; }
+        template<size_t M>
+        constexpr bool operator>(char const (&s)[M]) const
+        { return compare(static_string<>(s)) > 0; }
+        template<size_t M>
+        constexpr bool operator>=(char const (&s)[M]) const
+        { return compare(static_string<>(s)) >= 0; }
+        
         constexpr size_t find(char c) const {
             return internal::find_char_in_static_string(begin(), end(), c, 0);
         }
