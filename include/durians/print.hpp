@@ -2,281 +2,394 @@
 //  print.hpp
 //  durians
 //
-//  Created by Joe Groff on 8/14/12.
-//  Copyright (c) 2012 Durian Software. MIT license.
+//  Created by Joe Groff on 8/22/12.
+//  Copyright (c) 2012 Durian Software. All rights reserved.
 //
 
 #ifndef durians_print_hpp
 #define durians_print_hpp
 
-#include <array>
-#include <limits>
-#include <cstdio>
-#include <string>
-#include <tuple>
-#include <type_traits>
-#include <durians/enum_meta.hpp>
 #include <durians/misc.hpp>
-#include <durians/struct_meta.hpp>
+#include <durians/packs.hpp>
+#include <durians/slice.hpp>
+#include <cstdint>
+#include <cstdio>
+#include <cwchar>
+#include <type_traits>
 
 namespace durians {
-    // TODO:
-    // - need to support print_traits that construct a string or other type to hold printed representation
-    // - need to support types that can't be printed using formatting strings (e.g.containers)
-    // - genericize print target concept?
-    template<char...c>
-    struct string_constant {
-        static const char value[sizeof...(c)+1];
-    };
+    template<size_t N> struct format_arg_t {};
     
-    template<char...c>
-    constexpr char string_constant<c...>::value[sizeof...(c)+1] = {c..., '\0'};
-        
-    template<typename...T>
-    struct concat_string_constant;
-    template<char...c, char...d, typename...T>
-    struct concat_string_constant<string_constant<c...>, string_constant<d...>, T...>
-    : concat_string_constant<string_constant<c..., d...>, T...>
-    {};
-    template<char...c>
-    struct concat_string_constant<string_constant<c...>> : string_constant<c...> {
-        using type = string_constant<c...>;
-    };
+    template<typename T, typename If = void>
+    struct print_traits;
+    
     template<>
-    struct concat_string_constant<> : string_constant<> {
-        using type = string_constant<>;
-    };
-
-    template<typename Sep, typename...T>
-    struct join_string_constant;
-    template<char...sep, char...c, char...d, typename...T>
-    struct join_string_constant<string_constant<sep...>, string_constant<c...>, string_constant<d...>, T...>
-    : join_string_constant<string_constant<sep...>, string_constant<c..., sep..., d...>, T...>
-    {};
-    template<char...sep, char...c>
-    struct join_string_constant<string_constant<sep...>, string_constant<c...>>
-    : string_constant<c...> {
-        using type = string_constant<c...>;
-    };
-    template<char...sep>
-    struct join_string_constant<string_constant<sep...>> : string_constant<> {
-        using type = string_constant<>;
+    struct print_traits<bool>
+    {
+        static constexpr char format_token[] = "s";
+        static char const *format_arg(bool b) { return b ? "true" : "false"; }
     };
     
-    namespace internal {
-        template<char c>
-        struct escaped_char { using type = string_constant<c>; };
-        
-        template<>
-        struct escaped_char<'%'> { using type = string_constant<'%', '%'>; };
-        
-        template<char...c>
-        using escape_string_constant = concat_string_constant<typename escaped_char<c>::type...>;
+    template<>
+    struct print_traits<char>
+    {
+        static constexpr char format_token[] = "c";
+        static int format_arg(char c) { return c; }
+    };
+    
+    template<>
+    struct print_traits<wchar_t>
+    {
+        static constexpr char format_token[] = "lc";
+        static std::wint_t format_arg(wchar_t c) { return c; }
+    };
+    
+    namespace internal
+    {
+        template<typename T>
+        struct signed_int_print_traits
+        {
+            static_assert(std::is_signed<T>::value && sizeof(T) <= sizeof(int), "");
+            static constexpr char format_token[] = "d";
+            static constexpr char octal_format_token[] = "o";
+            static constexpr char hex_format_token[] = "x";
+            static constexpr char HEX_format_token[] = "X";
+            static int format_arg(T i) { return i; }
+        };
     }
     
-    template<typename T, typename If = void> struct print_traits;
-
-    template<size_t> struct format_arg_t {};
+    template<>
+    struct print_traits<signed char> : internal::signed_int_print_traits<signed char>
+    {
+    };
     
-    template<> struct print_traits<char> {
-        static constexpr char format_string[] = "%c";
-        static constexpr size_t format_arg_count = 1;
-        static int format_arg(signed char x, format_arg_t<0>) { return x; }
+    template<>
+    struct print_traits<short> : internal::signed_int_print_traits<short>
+    {
     };
-    template<> struct print_traits<signed char> {
-        static constexpr char format_string[] = "%d";
-        static constexpr size_t format_arg_count = 1;
-        static int format_arg(signed char x, format_arg_t<0>) { return x; }
+    
+    template<>
+    struct print_traits<int> : internal::signed_int_print_traits<int>
+    {
     };
-    template<> struct print_traits<short> {
-        static constexpr char format_string[] = "%d";
-        static constexpr size_t format_arg_count = 1;
-        static int format_arg(short x, format_arg_t<0>) { return x; }
+    
+    template<>
+    struct print_traits<long>
+    {
+        static constexpr char format_token[] = "ld";
+        static constexpr char octal_format_token[] = "lo";
+        static constexpr char hex_format_token[] = "lx";
+        static constexpr char HEX_format_token[] = "lX";
+        static long format_arg(long i) { return i; }
     };
-    template<> struct print_traits<int> {
-        static constexpr char format_string[] = "%d";
-        static constexpr size_t format_arg_count = 1;
-        static int format_arg(int x, format_arg_t<0>) { return x; }
+    
+    template<>
+    struct print_traits<long long>
+    {
+        static constexpr char format_token[] = "lld";
+        static constexpr char octal_format_token[] = "llo";
+        static constexpr char hex_format_token[] = "llx";
+        static constexpr char HEX_format_token[] = "llX";
+        static long long format_arg(long long i) { return i; }
     };
-    template<> struct print_traits<long> {
-        static constexpr char format_string[] = "%ld";
-        static constexpr size_t format_arg_count = 1;
-        static long format_arg(long x, format_arg_t<0>) { return x; }
+    
+    template<typename T>
+    struct print_traits<T,
+                        typename std::enable_if<(std::is_same<T, std::intmax_t>::value
+                                                 && !std::is_same<std::intmax_t, long long>::value
+                                                 && !std::is_same<std::intmax_t, long>::value)>::type>
+    {
+        static constexpr char format_token[] = "jd";
+        static constexpr char octal_format_token[] = "jo";
+        static constexpr char hex_format_token[] = "jx";
+        static constexpr char HEX_format_token[] = "jX";
+        static std::intmax_t format_arg(std::intmax_t i) { return i; }
     };
-    template<> struct print_traits<long long> {
-        static constexpr char format_string[] = "%lld";
-        static constexpr size_t format_arg_count = 1;
-        static long long format_arg(long long x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<unsigned char> {
-        static constexpr char format_string[] = "%u";
-        static constexpr size_t format_arg_count = 1;
-        static unsigned format_arg(unsigned char x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<unsigned short> {
-        static constexpr char format_string[] = "%u";
-        static constexpr size_t format_arg_count = 1;
-        static unsigned format_arg(unsigned short x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<unsigned> {
-        static constexpr char format_string[] = "%u";
-        static constexpr size_t format_arg_count = 1;
-        static unsigned format_arg(unsigned x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<unsigned long> {
-        static constexpr char format_string[] = "%lu";
-        static constexpr size_t format_arg_count = 1;
-        static unsigned long format_arg(unsigned long x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<unsigned long long> {
-        static constexpr char format_string[] = "%llu";
-        static constexpr size_t format_arg_count = 1;
-        static unsigned long long format_arg(unsigned long long x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<float> {
-        static constexpr char format_string[] = "%g";
-        static constexpr size_t format_arg_count = 1;
-        static double format_arg(float x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<double> {
-        static constexpr char format_string[] = "%g";
-        static constexpr size_t format_arg_count = 1;
-        static double format_arg(double x, format_arg_t<0>) { return x; }
-    };
-    template<typename T> struct print_traits<T *> {
-        static constexpr char format_string[] = "%p";
-        static constexpr size_t format_arg_count = 1;
-        static T *format_arg(T *x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<char const *> {
-        static constexpr char format_string[] = "%s";
-        static constexpr size_t format_arg_count = 1;
-        static char const *format_arg(char const *x, format_arg_t<0>) { return x; }
-    };
-    template<> struct print_traits<char *> : print_traits<char const *> {};
-    template<size_t N> struct print_traits<char const [N]> : print_traits<char const *> {};
-    template<size_t N> struct print_traits<char[N]> : print_traits<char const *> {};    
-
-    namespace internal {
-        template<typename T> struct string_constant_print_traits;
-        template<char...c>
-        struct string_constant_print_traits<string_constant<c...>> {
-            static constexpr char format_string[] = {c..., '\0'};
-            static constexpr size_t format_arg_count = 0;
+    
+    namespace internal
+    {
+        template<typename T>
+        struct unsigned_int_print_traits
+        {
+            static_assert(std::is_unsigned<T>::value && sizeof(T) <= sizeof(unsigned), "");
+            static constexpr char format_token[] = "u";
+            static constexpr char octal_format_token[] = "o";
+            static constexpr char hex_format_token[] = "x";
+            static constexpr char HEX_format_token[] = "X";
+            static unsigned format_arg(T i) { return i; }
         };
+    }
+
+    template<>
+    struct print_traits<unsigned char> : internal::unsigned_int_print_traits<unsigned char>
+    {
+    };
+    
+    template<>
+    struct print_traits<unsigned short> : internal::unsigned_int_print_traits<unsigned short>
+    {
+    };
+    
+    template<>
+    struct print_traits<unsigned> : internal::unsigned_int_print_traits<unsigned>
+    {
+    };
+    
+    template<>
+    struct print_traits<unsigned long>
+    {
+        static constexpr char format_token[] = "lu";
+        static constexpr char octal_format_token[] = "lo";
+        static constexpr char hex_format_token[] = "lx";
+        static constexpr char HEX_format_token[] = "lX";
+        static long format_arg(long i) { return i; }
+    };
+    
+    template<>
+    struct print_traits<unsigned long long>
+    {
+        static constexpr char format_token[] = "llu";
+        static constexpr char octal_format_token[] = "llo";
+        static constexpr char hex_format_token[] = "llx";
+        static constexpr char HEX_format_token[] = "llX";
+        static long long format_arg(long long i) { return i; }
+    };
+    
+    template<typename T>
+    struct print_traits<T,
+                        typename std::enable_if<(std::is_same<T, std::uintmax_t>::value
+                                                 && !std::is_same<std::uintmax_t, long long>::value
+                                                 && !std::is_same<std::uintmax_t, long>::value)>::type>
+    {
+        static constexpr char format_token[] = "ju";
+        static constexpr char octal_format_token[] = "jo";
+        static constexpr char hex_format_token[] = "jx";
+        static constexpr char HEX_format_token[] = "jX";
+        static std::intmax_t format_arg(std::uintmax_t i) { return i; }
+    };
+    
+    namespace internal {
+        template<typename T>
+        struct float_print_traits {
+            static constexpr char format_token[] = "f";
+            static constexpr char hex_format_token[] = "a";
+            static constexpr char HEX_format_token[] = "A";
+            static double format_arg(T f) { return f; }
+        };
+    }
+    
+    template<>
+    struct print_traits<float> : internal::float_print_traits<float>
+    {
     };
 
-    template<char...c> struct print_traits<string_constant<c...>>
-    : internal::string_constant_print_traits<typename internal::escape_string_constant<c...>::type>
-    {};
-            
+    template<>
+    struct print_traits<double> : internal::float_print_traits<double>
+    {
+    };
+    
+    template<>
+    struct print_traits<long double>
+    {
+        static constexpr char format_token[] = "Lf";
+        static constexpr char hex_format_token[] = "La";
+        static constexpr char HEX_format_token[] = "LA";
+        static long double format_arg(long double f) { return f; }
+    };
+    
+    template<>
+    struct print_traits<char const *>
+    {
+        static constexpr char format_token[] = "s";
+        static char const *format_arg(char const *s) { return s; }
+    };
+    
+    template<>
+    struct print_traits<char *> : print_traits<char const *>
+    {
+    };
+    
+    template<>
+    struct print_traits<wchar_t const *>
+    {
+        static constexpr char format_token[] = "ls";
+        static wchar_t const *format_arg(wchar_t const *s) { return s; }
+    };
+    
+    template<>
+    struct print_traits<wchar_t *> : print_traits<wchar_t const *>
+    {
+    };
+    
+    template<size_t N>
+    struct print_traits<char const (&)[N]> : print_traits<char const *>
+    {
+    };
+    
+    template<size_t N>
+    struct print_traits<char (&)[N]> : print_traits<char *>
+    {
+    };
+    
     template<typename T>
-    struct print_traits<T&> : print_traits<T> {};
+    struct print_traits<T*>
+    {
+        static constexpr char format_token[] = "p";
+        static T *format_arg(T *p) { return p; }
+    };
+    
+    template<typename T, typename If = void>
+    struct is_print_atom : std::false_type {};
     template<typename T>
-    struct print_traits<T&&> : print_traits<T> {};
+    struct is_print_atom<T, typename std::enable_if<(sizeof(print_traits<T>::format_token)
+                                                     && sizeof(print_traits<T>::format_arg))>::type>
+    : std::true_type {};
+
+    template<typename T, typename If = void>
+    struct has_print_method : std::false_type {};
+    template<typename T>
+    struct has_print_method<T, typename std::enable_if<(sizeof(print_traits<T>::print))>::type>
+    : std::true_type {};
+
     template<typename T>
     struct print_traits<T const> : print_traits<T> {};
     template<typename T>
     struct print_traits<T volatile> : print_traits<T> {};
-        
     template<typename T>
-    struct print_traits<T, typename std::enable_if<(sizeof(T::format_string)
-                                                    && std::is_convertible<decltype(T::format_arg_count), std::size_t>::value)>::type>
+    struct print_traits<T &> : print_traits<T> {};
+    template<typename T>
+    struct print_traits<T &&> : print_traits<T> {};
+    
+    template<typename T>
+    struct octal_t
     {
-        static constexpr char const (&format_string)[sizeof(T::format_string)] = T::format_string;
-        static constexpr size_t format_arg_count = T::format_arg_count;
-        
-        template<typename U, size_t N>
-        static auto format_arg(U &&subject, format_arg_t<N> n)
-        -> decltype(subject.format_arg(n))
-        {
-            return subject.format_arg(n);
-        }
+        T &&what;
     };
 
-    template<> struct print_traits<std::string> {
-        static constexpr char format_string[] = "%*s";
-        static constexpr size_t format_arg_count = 2;
-        static int format_arg(std::string const &s, format_arg_t<0>) { return int(s.size()); }
-        static char const *format_arg(std::string const &s, format_arg_t<1>) { return s.c_str(); }
+    template<typename T>
+    struct hex_t
+    {
+        T &&what;
+    };
+
+    template<typename T>
+    struct HEX_t
+    {
+        T &&what;
+    };
+    
+    template<typename T>
+    octal_t<T> octal(T &&what) { return octal_t<T>{std::forward<T>(what)}; }
+    template<typename T>
+    hex_t<T> hex(T &&what) { return hex_t<T>{std::forward<T>(what)}; }
+    template<typename T>
+    HEX_t<T> HEX(T &&what) { return HEX_t<T>{std::forward<T>(what)}; }
+    
+    template<typename T>
+    struct print_traits<octal_t<T>, typename std::enable_if<is_print_atom<T>::value>::type>
+    {
+        static constexpr auto &format_token = print_traits<T>::octal_format_token;
+        static auto format_arg(octal_t<T> const &o)
+        -> decltype(print_traits<T>::format_arg(o.what))
+        {
+            return print_traits<T>::format_arg(o.what);
+        }
+    };
+    
+    template<typename T>
+    struct print_traits<hex_t<T>, typename std::enable_if<is_print_atom<T>::value>::type>
+    {
+        static constexpr auto &format_token = print_traits<T>::hex_format_token;
+        static auto format_arg(hex_t<T> const &o)
+        -> decltype(print_traits<T>::format_arg(o.what))
+        {
+            return print_traits<T>::format_arg(o.what);
+        }
+    };
+    
+    template<typename T>
+    struct print_traits<HEX_t<T>, typename std::enable_if<is_print_atom<T>::value>::type>
+    {
+        static constexpr auto &format_token = print_traits<T>::HEX_format_token;
+        static auto format_arg(HEX_t<T> const &o)
+        -> decltype(print_traits<T>::format_arg(o.what))
+        {
+            return print_traits<T>::format_arg(o.what);
+        }
     };
     
     namespace internal {
-        inline constexpr size_t sum() { return 0; }
-        inline constexpr size_t sum(size_t a) { return a; }
-        template<typename T, typename...TT>
-        inline constexpr size_t sum(T a, T b, TT...c)
-        {
-            return sum(a + b, c...);
-        }
-        
-        template<typename T, typename NN = integers<sizeof(print_traits<T>::format_string) - 1>>
-        struct format_chars;
+        template<typename T, typename NN = integers<sizeof(T::value) - 1>>
+        struct string_literal;
         
         template<typename T, size_t...NN>
-        struct format_chars<T, values<size_t, NN...>>
+        struct string_literal<T, values<size_t, NN...>>
         {
-            using type = string_constant<print_traits<T>::format_string[NN]...>;
+            static const char value[sizeof...(NN)+1];
         };
-
-        template<typename...T>
-        struct format_string : concat_string_constant<typename format_chars<T>::type...> {};
+        template<typename T, size_t...NN>
+        char const string_literal<T, values<size_t, NN...>>::value[sizeof...(NN)+1]
+        = {T::value[NN]..., 0};
         
-        template<size_t N, typename If, typename...T>
-        struct format_arg;
-        
-        template<size_t N, typename T, typename...TT>
-        struct format_arg<N, typename std::enable_if<(N < print_traits<T>::format_arg_count)>::type, T, TT...>
-        {
-            template<typename U, typename...UU>
-            static auto get(U &&arg, UU &&...)
-            -> decltype(print_traits<T>::format_arg(std::forward<U>(arg), format_arg_t<N>()))
-            { return print_traits<T>::format_arg(std::forward<U>(arg), format_arg_t<N>()); }
+        template<char...C>
+        struct string_constant {
+            static constexpr char value[] = {C..., 0};
         };
         
-        template<size_t N, typename T, typename...TT>
-        struct format_arg<N, typename std::enable_if<(N >= print_traits<T>::format_arg_count)>::type, T, TT...>
+        template<typename A, typename B,
+                 typename NN = integers<sizeof(A::value)-1>,
+                 typename MM = integers<sizeof(B::value)-1>>
+        struct concat;
+        template<typename A, typename B, size_t...NN, size_t...MM>
+        struct concat<A, B, values<size_t, NN...>, values<size_t, MM...>>
         {
-            template<typename U, typename...UU>
-            static auto get(U &&, UU &&...args)
-            S_AUTO(format_arg<N - print_traits<T>::format_arg_count, void, TT...>::get(std::forward<UU>(args)...))
+            static constexpr char value[] = {A::value[NN]..., B::value[MM]..., 0};
         };
         
-        template<typename...TT>
-        struct format_arg_count
-        : std::integral_constant<std::size_t, sum(print_traits<TT>::format_arg_count...)>
+        template<size_t N, char...C>
+        struct stringize_int
+        : stringize_int<N/10, C..., '0' + N%10>
         {};
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wformat-security"
-        template<size_t...N, typename...T>
-        inline int _print(values<size_t, N...>, T &&...args)
+        
+        template<char...C>
+        struct stringize_int<0, C...>
         {
-            return std::printf(internal::format_string<T...>::value,
-                               format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
-        }
-        template<size_t...N, typename...T>
-        inline int _fprint(values<size_t, N...>, std::FILE *f, T &&...args)
+            static constexpr char value[] = {C..., 0};
+        };
+                
+        template<size_t Width, size_t Prec, typename T,
+                 typename NN = integers<sizeof(print_traits<T>::format_token)-1>>
+        struct format_spec;
+        
+        template<typename T, size_t...NN>
+        struct format_spec<0, 0, T, values<size_t, NN...>>
         {
-            return std::fprintf(f, internal::format_string<T...>::value,
-                                format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
-        }
-        template<size_t...N, typename...T>
-        inline int _snprint(values<size_t, N...>, char *out, size_t size, T &&...args)
+            static constexpr char value[] = {'%', print_traits<T>::format_token[NN]..., 0};
+        };
+        
+        template<typename...AA>
+        inline int printf_to(FILE *f, char const *fmt, AA &&...args)
         {
-            return std::snprintf(out, size, internal::format_string<T...>::value,
-                                 format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
+            return std::fprintf(f, fmt, args...);
         }
         
-        template<typename String, typename...TT>
-        inline void _strprintf(String &s, char const *format, TT &&...args)
+        template<typename...AA>
+        inline int printf_to(mutable_slice<char> s, char const *fmt, AA &&...args)
+        {
+            return std::snprintf(s.data(), s.size(), fmt, args...);
+        }
+        
+        template<typename...AA>
+        inline int printf_to(std::string &s, char const *format, AA &&...args)
         {
             size_t offset = s.size();
             size_t capacity = s.capacity();
+            size_t count;
             
             s.resize(capacity);
             for (;;) {
-                size_t count = std::snprintf(&s[offset], capacity-offset+1, format,
-                                             std::forward<TT>(args)...);
+                count = std::snprintf(&s[offset], capacity-offset+1, format,
+                                      std::forward<AA>(args)...);
                 if (offset+count <= capacity) {
                     s.resize(offset+count);
                     break;
@@ -284,130 +397,48 @@ namespace durians {
                 capacity = offset+count;
                 s.resize(capacity);
             }
+            return int(count);
         }
-#pragma clang diagnostic pop
 
-        template<size_t...N, typename String, typename...T>
-        inline void _strprint(values<size_t, N...>, String &out, T &&...args)
+        template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
+        inline int _print_to(typename std::enable_if<N == sizeof...(TT)>::type *,
+                             Dest &&dest,
+                             std::tuple<TT...> const &args,
+                             Fmt,
+                             AA &&...format_args)
         {
-            _strprintf(out, internal::format_string<T...>::value,
-                       format_arg<N, void, T...>::get(std::forward<T>(args)...)...);
+            return printf_to(dest, string_literal<Fmt>::value, format_args...);
         }
 
-        template<typename TT, typename NN, typename CC>
-        struct _tuple_print_traits;
-        
-        template<typename...T, size_t...N, char...c>
-        struct _tuple_print_traits<types<T...>, values<size_t, N...>, string_constant<c...>> {
-            static constexpr char format_string[] = {'{', c..., '}', '\0'};
-            static constexpr size_t format_arg_count = sum(print_traits<T>::format_arg_count...);
+        template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
+        inline int _print_to(typename std::enable_if<(N < sizeof...(TT))>::type *,
+                             Dest &&dest,
+                             std::tuple<TT...> const &args,
+                             Fmt,
+                             AA &&...format_args)
+        {
             
-            template<typename Agg, size_t M>
-            static auto format_arg(Agg const &t, format_arg_t<M>)
-            -> decltype(internal::format_arg<M, void, T...>::get(get<N>(t)...))
-            {
-                return internal::format_arg<M, void, T...>::get(get<N>(t)...);
-            }
-        };
-
-        template<typename T, typename NN = integers<aggregate_size<T>::value>>
-        struct tuple_print_traits;
-        
-        template<typename T, size_t...NN>
-        struct tuple_print_traits<T, values<size_t, NN...>>
-        : _tuple_print_traits<types<typename aggregate_element<NN, T>::type...>,
-                              values<size_t, NN...>,
-                              typename join_string_constant<string_constant<',', ' '>,
-                                                            typename internal::format_chars<typename aggregate_element<NN, T>::type>::type...>::type>
-                              
-        {};
-    }
-    
-    template<typename T>
-    struct print_traits<T, typename std::enable_if<is_aggregate<T>::value>::type>
-    : internal::tuple_print_traits<T> {};
-    
-    template<typename T>
-    struct print_traits<T, typename std::enable_if<std::is_enum<T>::value>::type> {
-        static constexpr char format_string[] = "%s";
-        static constexpr size_t format_arg_count = 1;
-        
-        static char const *format_arg(T value, format_arg_t<0>) {
-            return enum_member_name(value);
+            return _print_to<N+1>(nullptr, std::forward<Dest>(dest), args,
+                                  concat<Fmt, format_spec<0, 0, type_at<N, TT...>>>(),
+                                  std::forward<AA>(format_args)...,
+                                  print_traits<type_at<N, TT...>>::format_arg(std::get<N>(args)));
         }
-    };
-    
-    template<typename...T>
-    inline void print(T &&...args)
-    {
-        internal::_print(integers<internal::format_arg_count<T...>::value>(),
-                         std::forward<T>(args)...);
     }
     
-    template<typename...T>
-    inline void fprint(std::FILE *out, T &&...args)
+    template<typename Dest, typename...TT>
+    inline int print_to(Dest &&dest, TT &&...args)
     {
-        internal::_fprint(integers<internal::format_arg_count<T...>::value>(),
-                          out, std::forward<T>(args)...);
+        return internal::_print_to<0>(nullptr, std::forward<Dest>(dest),
+                                      std::tuple<TT &&...>{std::forward<TT>(args)...},
+                                      internal::string_constant<>());
     }
     
-    template<typename...T>
-    inline size_t snprint(char *out, size_t len, T &&...args)
+    template<typename...AA>
+    inline std::string str(AA &&...args)
     {
-        return internal::_snprint(integers<internal::format_arg_count<T...>::value>(),
-                                  out, len, std::forward<T>(args)...);
-    }
-
-    template<typename String, typename...T>
-    inline void strprint(String &s, T &&...args)
-    {
-        internal::_strprint(integers<internal::format_arg_count<T...>::value>(),
-                            s, std::forward<T>(args)...);
-    }
-    
-    template<typename String = std::string, typename...T>
-    inline String str(T &&...args)
-    {
-        String ret;
-        strprint(ret, std::forward<T>(args)...);
-        return ret;
-    }
-
-    namespace delim {
-        constexpr string_constant<' '> space = {};
-        constexpr string_constant<'\n'> nl = {};
-        constexpr string_constant<'\t'> tab = {};
-        constexpr string_constant<','> comma = {};
-    }
-    
-    template<typename...T>
-    inline void println(T &&...args)
-    {
-        print(std::forward<T>(args)..., delim::nl);
-    }
-
-    template<typename...T>
-    inline void fprintln(std::FILE *out, T &&...args)
-    {
-        fprint(out, std::forward<T>(args)..., delim::nl);
-    }
-
-    template<typename...T>
-    inline void snprintln(char *out, size_t len, T &&...args)
-    {
-        snprint(out, len, std::forward<T>(args)..., delim::nl);
-    }
-
-    template<typename String, typename...T>
-    inline void strprintln(String &s, T &&...args)
-    {
-        strprint(s, std::forward<T>(args)..., delim::nl);
-    }
-
-    template<typename String = std::string, typename...T>
-    inline String strln(T &&...args)
-    {
-        return str(std::forward<T>(args)..., delim::nl);
+        std::string s;
+        print_to(s, std::forward<AA>(args)...);
+        return s;
     }
 }
 
