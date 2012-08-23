@@ -221,26 +221,6 @@ namespace durians {
     {
     };
     
-    template<size_t N>
-    struct print_traits<char const (&)[N]> : print_traits<char const *>
-    {
-    };
-    
-    template<size_t N>
-    struct print_traits<char (&)[N]> : print_traits<char *>
-    {
-    };
-    
-    template<size_t N>
-    struct print_traits<wchar_t const (&)[N]> : print_traits<wchar_t const *>
-    {
-    };
-    
-    template<size_t N>
-    struct print_traits<wchar_t (&)[N]> : print_traits<wchar_t *>
-    {
-    };
-    
     template<typename T>
     struct print_traits<T*>
     {
@@ -260,17 +240,19 @@ namespace durians {
     };
     
     namespace internal {
+        template<typename T>
+        struct base_print_traits : print_traits<typename std::decay<T>::type> {};        
+        
         template<typename T, typename If = void>
         struct _is_print_atom : std::false_type {};
         template<typename T>
-        struct _is_print_atom<T, typename std::enable_if<(sizeof(print_traits<T>::format_token)
-                                                         && sizeof(print_traits<T>::format_arg))>::type>
+        struct _is_print_atom<T, decltype(static_cast<void>(static_cast<char const *>(print_traits<typename std::decay<T>::type>::format_token)))>
         : std::true_type {};
 
         template<typename T, typename If = void>
         struct _has_print_method : std::false_type {};
         template<typename T>
-        struct _has_print_method<T, decltype(static_cast<void>(print_traits<T>::print(stdout, *reinterpret_cast<typename std::remove_reference<T>::type const*>(0))))>
+        struct _has_print_method<T, decltype(static_cast<void>(base_print_traits<T>::print(stdout, *reinterpret_cast<typename std::remove_reference<T>::type const*>(0))))>
         : std::true_type {};
     }
         
@@ -279,15 +261,6 @@ namespace durians {
     template<typename T>
     using has_print_method = internal::_has_print_method<T>;
 
-    template<typename T>
-    struct print_traits<T const> : print_traits<T> {};
-    template<typename T>
-    struct print_traits<T volatile> : print_traits<T> {};
-    template<typename T>
-    struct print_traits<T &> : print_traits<T> {};
-    template<typename T>
-    struct print_traits<T &&> : print_traits<T> {};
-    
     template<typename T>
     struct octal_t
     {
@@ -364,6 +337,16 @@ namespace durians {
             static constexpr char value[] = {C..., 0};
         };
         
+        template<typename T, typename If = void>
+        struct _is_string_constant : std::false_type {};
+        template<typename T>
+        struct _is_string_constant<T, typename std::enable_if<(std::is_empty<T>::value
+                                                               && std::is_convertible<decltype(T::value), char const*>::value)>::type>
+        : std::true_type {};
+        
+        template<typename T>
+        using is_string_constant = _is_string_constant<typename std::decay<T>::type>;
+        
         template<typename A, typename B,
                  typename NN = integers<sizeof(A::value)-1>,
                  typename MM = integers<sizeof(B::value)-1>>
@@ -373,6 +356,23 @@ namespace durians {
         {
             static constexpr char value[] = {A::value[NN]..., B::value[MM]..., 0};
         };
+        
+        template<typename A, size_t N, typename If, char...C>
+        struct _escape : _escape<A, N+1, void, C..., A::value[N]> {};
+        template<typename A, size_t N, char...C>
+        struct _escape<A, N, typename std::enable_if<A::value[N] == '%'>::type, C...>
+        : _escape<A, N, void, C..., '%', '%'>
+        {
+        };
+        
+        template<typename A, size_t N, char...C>
+        struct _escape<A, N, typename std::enable_if<A::value[N] == 0>::type, C...>
+        : string_constant<C...>
+        {
+        };
+        
+        template<typename A>
+        using escape = _escape<A, 0, void>;
         
         template<size_t N, char...C>
         struct stringize_int
@@ -386,13 +386,13 @@ namespace durians {
         };
                 
         template<size_t Width, size_t Prec, typename T,
-                 typename NN = integers<sizeof(print_traits<T>::format_token)-1>>
+                 typename NN = integers<sizeof(internal::base_print_traits<T>::format_token)-1>>
         struct format_spec;
         
         template<typename T, size_t...NN>
         struct format_spec<0, 0, T, values<size_t, NN...>>
         {
-            static constexpr char value[] = {'%', print_traits<T>::format_token[NN]..., 0};
+            static constexpr char value[] = {'%', internal::base_print_traits<T>::format_token[NN]..., 0};
         };
         
         template<typename...AA>
@@ -428,6 +428,7 @@ namespace durians {
             return int(count);
         }
 
+        // all parameters handled
         template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
         inline void _print_to(typename std::enable_if<N == sizeof...(TT)>::type *,
                               Dest &&dest,
@@ -439,6 +440,7 @@ namespace durians {
                       std::forward<AA>(format_args)...);
         }
 
+        // handle print atom
         template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
         inline void _print_to(typename std::enable_if<is_type_at<is_print_atom, N, TT...>::value>::type *,
                               Dest &&dest,
@@ -450,9 +452,24 @@ namespace durians {
             _print_to<N+1>(nullptr, std::forward<Dest>(dest), args,
                            concat<Fmt, format_spec<0, 0, type_at<N, TT...>>>(),
                            std::forward<AA>(format_args)...,
-                           print_traits<type_at<N, TT...>>::format_arg(std::get<N>(args)));
+                           base_print_traits<type_at<N, TT...>>::format_arg(std::get<N>(args)));
         }
 
+        // handle string constant (empty type with static constexpr char value[] member)
+        template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
+        inline void _print_to(typename std::enable_if<is_type_at<is_string_constant, N, TT...>::value>::type *,
+                              Dest &&dest,
+                              std::tuple<TT...> const &args,
+                              Fmt,
+                              AA &&...format_args)
+        {
+            
+            _print_to<N+1>(nullptr, std::forward<Dest>(dest), args,
+                           concat<Fmt, base_print_traits<type_at<N, TT...>>>(),
+                           std::forward<AA>(format_args)...);
+        }
+        
+        // handle type with print() method
         template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
         inline void _print_to(typename std::enable_if<is_type_at<has_print_method, N, TT...>::value>::type *,
                               Dest &&dest,
@@ -463,11 +480,23 @@ namespace durians {
             printf_to(std::forward<Dest>(dest), string_literal<Fmt>::value,
                       std::forward<AA>(format_args)...);
 
-            print_traits<type_at<N, TT...>>::print(std::forward<Dest>(dest), std::get<N>(args));
+            internal::base_print_traits<type_at<N, TT...>>::print(std::forward<Dest>(dest), std::get<N>(args));
             
             _print_to<N+1>(nullptr, std::forward<Dest>(dest), args,
                            internal::string_constant<>());
         }
+    }
+
+    template<typename T>
+    struct print_traits<T, typename std::enable_if<internal::is_string_constant<T>::value>::type>
+    {
+        static constexpr auto &value = internal::escape<T>::value;
+    };
+
+    namespace delim {
+        constexpr internal::string_constant<'\n'> nl = {};
+        constexpr internal::string_constant<' '> space = {};
+        constexpr internal::string_constant<'\t'> tab = {};
     }
     
     template<typename Dest, typename...TT>

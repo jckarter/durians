@@ -42,8 +42,8 @@ static_assert(has_print_method<some_struct_with_print_method const>::value,
 
 void test_print()
 {
-    string s1 = str(L'0', '1', 2, "345", octal(067), L"89", hex(0xabc), HEX(0xDEF));
-    assert(s1 == "0123456789abcDEF");
+    string s1 = str(L'0', '1', 2, "345", octal(067), L"89", hex(0xabc), HEX(0xDEF), delim::nl);
+    assert(s1 == "0123456789abcDEF\n");
     
     string s2 = str(0, '[', some_struct_with_print_method{}, ']', 0);
     assert(s2 == "0[hello world]0");
