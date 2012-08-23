@@ -396,19 +396,19 @@ namespace durians {
         };
         
         template<typename...AA>
-        inline int printf_to(FILE *f, char const *fmt, AA &&...args)
+        inline int printf_to(FILE *f, char const *fmt, AA &&...args) noexcept
         {
             return std::fprintf(f, fmt, args...);
         }
         
         template<typename...AA>
-        inline int printf_to(mutable_slice<char> s, char const *fmt, AA &&...args)
+        inline int printf_to(mutable_slice<char> s, char const *fmt, AA &&...args) noexcept
         {
             return std::snprintf(s.data(), s.size(), fmt, args...);
         }
         
         template<typename...AA>
-        inline int printf_to(std::string &s, char const *format, AA &&...args)
+        inline int printf_to(std::string &s, char const *format, AA &&...args) noexcept
         {
             size_t offset = s.size();
             size_t capacity = s.capacity();
