@@ -231,6 +231,16 @@ namespace durians {
     {
     };
     
+    template<size_t N>
+    struct print_traits<wchar_t const (&)[N]> : print_traits<wchar_t const *>
+    {
+    };
+    
+    template<size_t N>
+    struct print_traits<wchar_t (&)[N]> : print_traits<wchar_t *>
+    {
+    };
+    
     template<typename T>
     struct print_traits<T*>
     {
@@ -238,18 +248,36 @@ namespace durians {
         static T *format_arg(T *p) { return p; }
     };
     
-    template<typename T, typename If = void>
-    struct is_print_atom : std::false_type {};
     template<typename T>
-    struct is_print_atom<T, typename std::enable_if<(sizeof(print_traits<T>::format_token)
-                                                     && sizeof(print_traits<T>::format_arg))>::type>
-    : std::true_type {};
+    struct print_traits<T, typename std::enable_if<!std::is_const<T>::value && !std::is_volatile<T>::value,
+                                                   decltype(static_cast<void>(reinterpret_cast<T const*>(0)->print(stdout)))>::type>
+    {
+        template<typename Dest>
+        static void print(Dest &&dest, T const &thing)
+        {
+            thing.print(std::forward<Dest>(dest));
+        }
+    };
+    
+    namespace internal {
+        template<typename T, typename If = void>
+        struct _is_print_atom : std::false_type {};
+        template<typename T>
+        struct _is_print_atom<T, typename std::enable_if<(sizeof(print_traits<T>::format_token)
+                                                         && sizeof(print_traits<T>::format_arg))>::type>
+        : std::true_type {};
 
-    template<typename T, typename If = void>
-    struct has_print_method : std::false_type {};
+        template<typename T, typename If = void>
+        struct _has_print_method : std::false_type {};
+        template<typename T>
+        struct _has_print_method<T, decltype(static_cast<void>(print_traits<T>::print(stdout, *reinterpret_cast<typename std::remove_reference<T>::type const*>(0))))>
+        : std::true_type {};
+    }
+        
     template<typename T>
-    struct has_print_method<T, typename std::enable_if<(sizeof(print_traits<T>::print))>::type>
-    : std::true_type {};
+    using is_print_atom = internal::_is_print_atom<T>;
+    template<typename T>
+    using has_print_method = internal::_has_print_method<T>;
 
     template<typename T>
     struct print_traits<T const> : print_traits<T> {};
@@ -401,36 +429,53 @@ namespace durians {
         }
 
         template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
-        inline int _print_to(typename std::enable_if<N == sizeof...(TT)>::type *,
-                             Dest &&dest,
-                             std::tuple<TT...> const &args,
-                             Fmt,
-                             AA &&...format_args)
+        inline void _print_to(typename std::enable_if<N == sizeof...(TT)>::type *,
+                              Dest &&dest,
+                              std::tuple<TT...> const &args,
+                              Fmt,
+                              AA &&...format_args)
         {
-            return printf_to(dest, string_literal<Fmt>::value, format_args...);
+            printf_to(std::forward<Dest>(dest), string_literal<Fmt>::value,
+                      std::forward<AA>(format_args)...);
         }
 
         template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
-        inline int _print_to(typename std::enable_if<(N < sizeof...(TT))>::type *,
-                             Dest &&dest,
-                             std::tuple<TT...> const &args,
-                             Fmt,
-                             AA &&...format_args)
+        inline void _print_to(typename std::enable_if<is_type_at<is_print_atom, N, TT...>::value>::type *,
+                              Dest &&dest,
+                              std::tuple<TT...> const &args,
+                              Fmt,
+                              AA &&...format_args)
         {
             
-            return _print_to<N+1>(nullptr, std::forward<Dest>(dest), args,
-                                  concat<Fmt, format_spec<0, 0, type_at<N, TT...>>>(),
-                                  std::forward<AA>(format_args)...,
-                                  print_traits<type_at<N, TT...>>::format_arg(std::get<N>(args)));
+            _print_to<N+1>(nullptr, std::forward<Dest>(dest), args,
+                           concat<Fmt, format_spec<0, 0, type_at<N, TT...>>>(),
+                           std::forward<AA>(format_args)...,
+                           print_traits<type_at<N, TT...>>::format_arg(std::get<N>(args)));
+        }
+
+        template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>
+        inline void _print_to(typename std::enable_if<is_type_at<has_print_method, N, TT...>::value>::type *,
+                              Dest &&dest,
+                              std::tuple<TT...> const &args,
+                              Fmt,
+                              AA &&...format_args)
+        {
+            printf_to(std::forward<Dest>(dest), string_literal<Fmt>::value,
+                      std::forward<AA>(format_args)...);
+
+            print_traits<type_at<N, TT...>>::print(std::forward<Dest>(dest), std::get<N>(args));
+            
+            _print_to<N+1>(nullptr, std::forward<Dest>(dest), args,
+                           internal::string_constant<>());
         }
     }
     
     template<typename Dest, typename...TT>
-    inline int print_to(Dest &&dest, TT &&...args)
+    inline void print_to(Dest &&dest, TT &&...args)
     {
-        return internal::_print_to<0>(nullptr, std::forward<Dest>(dest),
-                                      std::tuple<TT &&...>{std::forward<TT>(args)...},
-                                      internal::string_constant<>());
+        internal::_print_to<0>(nullptr, std::forward<Dest>(dest),
+                               std::tuple<TT &&...>{std::forward<TT>(args)...},
+                               internal::string_constant<>());
     }
     
     template<typename...AA>
