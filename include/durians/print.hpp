@@ -361,7 +361,7 @@ namespace durians {
         struct _escape : _escape<A, N+1, void, C..., A::value[N]> {};
         template<typename A, size_t N, char...C>
         struct _escape<A, N, typename std::enable_if<A::value[N] == '%'>::type, C...>
-        : _escape<A, N, void, C..., '%', '%'>
+        : _escape<A, N+1, void, C..., '%', '%'>
         {
         };
         
@@ -395,6 +395,8 @@ namespace durians {
             static constexpr char value[] = {'%', internal::base_print_traits<T>::format_token[NN]..., 0};
         };
         
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-security"
         template<typename...AA>
         inline int printf_to(FILE *f, char const *fmt, AA &&...args) noexcept
         {
@@ -427,6 +429,7 @@ namespace durians {
             }
             return int(count);
         }
+#pragma clang diagnostic pop
 
         // all parameters handled
         template<size_t N, typename Dest, typename...TT, typename Fmt, typename...AA>

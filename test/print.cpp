@@ -47,4 +47,7 @@ void test_print()
     
     string s2 = str(0, '[', some_struct_with_print_method{}, ']', 0);
     assert(s2 == "0[hello world]0");
+
+    string s3 = str(internal::string_constant<'%'>());
+    assert(s3 == "%");    
 }
