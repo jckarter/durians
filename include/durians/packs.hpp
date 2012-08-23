@@ -43,6 +43,15 @@ namespace durians {
     struct is_every_type<Trait, T, TT...>
     : std::integral_constant<bool, Trait<T>::value && is_every_type<Trait, TT...>::value> {};
     
+    template<template<typename> class Trait, size_t N, typename...TT>
+    struct is_type_at;
+    template<template<typename> class Trait, size_t N>
+    struct is_type_at<Trait, N> : std::false_type {};
+    template<template<typename> class Trait, typename T, typename...TT>
+    struct is_type_at<Trait, 0, T, TT...> : Trait<T> {};
+    template<template<typename> class Trait, size_t N, typename T, typename...TT>
+    struct is_type_at<Trait, N, T, TT...> : is_type_at<Trait, N-1, TT...> {};
+    
     namespace internal {
         template<size_t N, typename T, typename...UU>
         struct _index_of_type;

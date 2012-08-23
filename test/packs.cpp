@@ -45,6 +45,13 @@ static_assert(!is_every_type<is_integral, float, void*, int()>::value,
 static_assert(is_every_type<is_integral>::value,
               "is_every_type should return true for empty type pack");
 
+static_assert(is_type_at<is_integral, 0, int, float>::value,
+              "is_type_at is true if trait is true for nth type");
+static_assert(!is_type_at<is_integral, 1, int, float>::value,
+              "is_type_at is false if trait is false for nth type");
+static_assert(!is_type_at<is_integral, 2, int, float>::value,
+              "is_type_at is false if index is out of bounds");
+
 template<size_t A, size_t B, size_t Limit>
 struct generate_fibonacci
 : value_generator<size_t, A, generate_fibonacci<B, A+B, Limit>, (A >= Limit)>
