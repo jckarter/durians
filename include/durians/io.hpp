@@ -73,7 +73,12 @@ namespace durians {
     inline size_t write_file(std::FILE *f, string_slice src)
     {
         return eintr_safe(fwrite, src.data(), 1, src.size(), f);
-    }    
+    }
+    
+    inline int flush_file(std::FILE *f)
+    {
+        return eintr_safe(fflush, f);
+    }
 }
 
 #endif
