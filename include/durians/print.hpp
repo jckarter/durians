@@ -323,14 +323,20 @@ namespace durians {
         template<typename T, typename NN = integers<sizeof(T::value) - 1>>
         struct string_literal;
         
+        template<char...C>
+        struct _string_literal
+        {
+            static const char value[sizeof...(C)+1];
+        };
+
+        template<char...C>
+        char const _string_literal<C...>::value[sizeof...(C)+1] = {C..., 0};
+        
         template<typename T, size_t...NN>
         struct string_literal<T, values<size_t, NN...>>
+        : _string_literal<T::value[NN]...>
         {
-            static const char value[sizeof...(NN)+1];
         };
-        template<typename T, size_t...NN>
-        char const string_literal<T, values<size_t, NN...>>::value[sizeof...(NN)+1]
-        = {T::value[NN]..., 0};
         
         template<char...C>
         struct string_constant {
