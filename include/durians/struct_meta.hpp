@@ -87,6 +87,19 @@ namespace durians {
             META_FIELDS_##NAME(META_STRUCT_GETTER) \
         }; \
     };
+    
+    namespace internal {
+        template<typename T, typename If = void>
+        struct _is_meta_struct : std::false_type {};
+        
+        template<typename T>
+        struct _is_meta_struct<T, typename std::enable_if<std::is_class<T>::value>::type>
+        : std::is_same<typename T::Q_struct_traits::self_type, T>
+        {};
+    }
+    
+    template<typename T>
+    using is_meta_struct = internal::_is_meta_struct<T>;
 
     template<typename T>
     using struct_traits = typename T::Q_struct_traits;
@@ -110,7 +123,7 @@ namespace durians {
     template<typename T, size_t N>
     struct is_aggregate<std::array<T, N>> : std::integral_constant<bool, true> {};
     template<typename T>
-    struct is_aggregate<T, typename std::enable_if<std::is_same<typename T::Q_struct_traits::self_type, T>::value>::type>
+    struct is_aggregate<T, typename std::enable_if<is_meta_struct<T>::value>::type>
     : std::integral_constant<bool, true> {};
     
     template<typename T, typename If = void>
@@ -119,12 +132,12 @@ namespace durians {
     struct aggregate_element : std::tuple_element<N, T> {};
     
     template<typename T>
-    struct aggregate_size<T, typename std::enable_if<std::is_same<typename T::Q_struct_traits::self_type, T>::value>::type>
+    struct aggregate_size<T, typename std::enable_if<is_meta_struct<T>::value>::type>
     : std::integral_constant<size_t, T::Q_struct_traits::aggregate_size()>
     {};
     
     template<size_t N, typename T>
-    struct aggregate_element<N, T, typename std::enable_if<std::is_same<typename T::Q_struct_traits::self_type, T>::value>::type> {
+    struct aggregate_element<N, T, typename std::enable_if<is_meta_struct<T>::value>::type> {
         using type = typename T::Q_struct_traits::template aggregate_element<N>;
     };
     

@@ -75,6 +75,20 @@ namespace durians {
     {
         return Q_enum_from_name(E(), name);
     }
+    
+    namespace internal {
+        template<typename T, typename If = void>
+        struct _is_meta_enum : std::false_type {};
+        
+        template<typename T>
+        struct _is_meta_enum<T, typename std::enable_if<std::is_enum<T>::value,
+                                                       decltype(static_cast<void>(static_cast<char const *>(Q_enum_member_name(T()))))>::type>
+        : std::true_type
+        {};
+    }
+    
+    template<typename T>
+    using is_meta_enum = internal::_is_meta_enum<T>;
 }
 
 #endif

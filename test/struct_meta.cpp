@@ -35,6 +35,7 @@ namespace durians_test {
     x(bas, array<int, 4>)
         META_STRUCT(Foo)
         
+        static_assert(durians::is_meta_struct<Foo>::value, "is_meta_struct is true for META_STRUCT");
         static_assert(durians::aggregate_size<Foo>::value == 3, "tuple_size of meta struct");
         static_assert(std::is_same<durians::aggregate_element<0, Foo>::type, int>::value, "tuple_element of meta struct");
         static_assert(std::is_same<durians::aggregate_element<1, Foo>::type, float>::value, "tuple_element of meta struct");
