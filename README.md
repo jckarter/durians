@@ -168,6 +168,51 @@ This header defines types and trait classes for manipulating variadic parameter 
 
 ## durians/print.hpp
 
+This header provides generic interfaces to the standard `printf` family of functions. An
+appropriate format string for a set of arguments is generated at compile time and passed down
+to `fprintf` or `snprintf` as approprite to the destination type.
+
+* `print_to(dest, args...)` prints each value in `args` to `dest`. `dest` may be one of the following
+    types:
+    * a `FILE*`, which will be printed to using `fprintf`, or
+    * a `mutable_slice<char>`, whose referenced memory will be written to using `snprintf`, or
+    * a `std::string &`, which will be appended to using `snprintf` and grown as necessary
+* `println_to(dest, args...)` prints each value in `args` to `dest`, followed by a newline.
+* `print` and `println` behave like `print_to` and `println_to` with a `dest` argument of `stdout`.
+
+The `print` functions support all types normally supported by `printf`:
+* `bool` is printed by `%s`, with an argument `"true"` or `"false"`.
+* `char` is printed by `%c`. `wchar_t` is printed by `%lc`.
+* Signed integer types from `signed char` up to `intmax_t` are printed by `%d`, `%ld`, `%lld`, or
+    `%jd` as appropriate for their size.
+* Unsigned integer types from `unsigned char` up to `uintmax_t` are printed by `%u`, `%lu`, `%llu`,
+    or `%ju` as appropriate for their size.
+* `float` and `double` are printed by `%g`. `long double` is printed by `%Lg`.
+* `char const *` is printed by `%s`. `wchar_t const *` is printed by `%ls`.
+* Pointer types other than `char*` are printed by `%p`.
+
+User-defined types can add `print` function support by defining a method template:
+```c++
+template<typename Dest> void print(Dest &&dest) const;
+```
+Alternately, individual methods may be defined:
+```c++
+void print(FILE *dest) const;
+void print(mutable_slice<char> dest) const;
+void print(std::string &dest) const;
+```
+
+Some examples of `print`'s behavior:
+
+* `print("hello world")` is equivalent to `fprintf(stdout, "%s", "hello world")`.
+* `println("hello ", 123)` is equivalent to `fprintf(stdout, "%s%d\n", "hello ", 123)`.
+* `print("hello ", printable{}, 123)`, where `printable` is a type with a `print` method, 
+  is equivalent to the following sequence of calls:
+
+        fprintf(stdout, "%s", "hello ");
+        printable{}.print(stdout);
+        fprintf(stdout, "%d\n", 123);
+
 ## durians/reftype.hpp
 
 This header defines macros and templates to help implement the "pimpl" pattern for implementation

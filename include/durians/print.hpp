@@ -389,7 +389,8 @@ namespace durians {
         {
             static constexpr char value[] = {C..., 0};
         };
-                
+
+        // FIXME support width, precision, other printf flags
         template<size_t Width, size_t Prec, typename T,
                  typename NN = integers<sizeof(internal::base_print_traits<T>::format_token)-1>>
         struct format_spec;
