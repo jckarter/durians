@@ -9,6 +9,7 @@
 #ifndef durians_print_hpp
 #define durians_print_hpp
 
+#include <durians/enum_meta.hpp>
 #include <durians/misc.hpp>
 #include <durians/packs.hpp>
 #include <durians/slice.hpp>
@@ -226,6 +227,25 @@ namespace durians {
     {
         static constexpr char format_token[] = "p";
         static T *format_arg(T *p) { return p; }
+    };
+    
+    template<typename T>
+    struct print_traits<T, typename std::enable_if<is_meta_enum<T>::value>::type>
+    {
+        static constexpr char format_token[] = "s";
+        static char const *format_arg(T e) { return enum_member_name(e); }
+    };
+    
+    template<typename T>
+    struct print_traits<T, typename std::enable_if<(std::is_enum<T>::value
+                                                    && !is_meta_enum<T>::value)>::type>
+    : print_traits<typename std::underlying_type<T>::type>
+    {
+        static auto format_arg(T e)
+        -> typename std::underlying_type<T>::type
+        {
+            return static_cast<typename std::underlying_type<T>::type>(e);
+        }
     };
     
     template<typename T>
