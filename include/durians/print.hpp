@@ -515,6 +515,24 @@ namespace durians {
                                internal::string_constant<>());
     }
     
+    template<typename Dest, typename...TT>
+    inline void println_to(Dest &&dest, TT &&...args)
+    {
+        print_to(std::forward<Dest>(dest), std::forward<TT>(args)..., delim::nl);
+    }
+    
+    template<typename Dest, typename...TT>
+    inline void print(Dest &&dest, TT &&...args)
+    {
+        print_to(stdout, std::forward<TT>(args)...);
+    }
+    
+    template<typename Dest, typename...TT>
+    inline void println(Dest &&dest, TT &&...args)
+    {
+        print_to(stdout, std::forward<TT>(args)..., delim::nl);
+    }
+    
     template<typename...AA>
     inline std::string str(AA &&...args)
     {
