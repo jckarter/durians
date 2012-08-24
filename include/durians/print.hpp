@@ -229,8 +229,7 @@ namespace durians {
     };
     
     template<typename T>
-    struct print_traits<T, typename std::enable_if<!std::is_const<T>::value && !std::is_volatile<T>::value,
-                                                   decltype(static_cast<void>(reinterpret_cast<T const*>(0)->print(stdout)))>::type>
+    struct print_traits<T, decltype(static_cast<void>(lvalue<T const>().print(stdout)))>
     {
         template<typename Dest>
         static void print(Dest &&dest, T const &thing)
@@ -252,7 +251,7 @@ namespace durians {
         template<typename T, typename If = void>
         struct _has_print_method : std::false_type {};
         template<typename T>
-        struct _has_print_method<T, decltype(static_cast<void>(base_print_traits<T>::print(stdout, *reinterpret_cast<typename std::remove_reference<T>::type const*>(0))))>
+        struct _has_print_method<T, decltype(static_cast<void>(base_print_traits<T>::print(stdout, rvalue<typename std::remove_reference<T>::type>())))>
         : std::true_type {};
     }
         

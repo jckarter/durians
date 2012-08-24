@@ -44,7 +44,15 @@ namespace durians {
     template<typename A, typename B>
     struct only_same;
     template<typename A>
-    struct only_same<A, A> : std::true_type {};    
+    struct only_same<A, A> : std::true_type {};
+    
+    // NOTE: these functions are intentionally undefined
+    template<typename T>
+    T &lvalue();
+    template<typename T>
+    T &&xvalue();
+    template<typename T>
+    T rvalue();
 }
 
 #endif
