@@ -18,6 +18,17 @@ using namespace durians;
 static_assert(is_empty<static_function<void(void*), free>>::value,
               "static_function should be empty");
 
+static_assert(std::is_same<if_<true, int, float>, int>::value, "if_<true>");
+static_assert(std::is_same<if_<false, int, float>, float>::value, "if_<false>");
+static_assert(std::is_same<switch_<void, case_<true, int>, case_<false, float>>, int>::value,
+              "switch_<>");
+static_assert(std::is_same<switch_<void, case_<true, int>, case_<true, float>>, int>::value,
+              "switch_<>");
+static_assert(std::is_same<switch_<void, case_<false, int>, case_<true, float>>, float>::value,
+              "switch_<>");
+static_assert(std::is_same<switch_<void, case_<false, int>, case_<false, float>>, void>::value,
+              "switch_<>");
+
 static bool did_free = false;
 namespace {
     void free2(void *x)

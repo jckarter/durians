@@ -53,6 +53,31 @@ namespace durians {
     T &&xvalue();
     template<typename T>
     T rvalue();
+    
+    template<bool Condition, typename T>
+    struct case_;
+    
+    namespace internal {
+        template<typename Default, typename...Case>
+        struct _switch_;
+        
+        template<typename Default>
+        struct _switch_<Default> { using type = Default; };
+        
+        template<typename Default, typename T, typename...Case>
+        struct _switch_<Default, case_<true, T>, Case...> { using type = T; };
+        
+        template<typename Default, typename T, typename...Case>
+        struct _switch_<Default, case_<false, T>, Case...>
+        : _switch_<Default, Case...>
+        {};
+    }
+    
+    template<bool Condition, typename Then, typename Else>
+    using if_ = typename std::conditional<Condition, Then, Else>::type;
+
+    template<typename Default, typename...Case>
+    using switch_ = typename internal::_switch_<Default, Case...>::type;
 }
 
 #endif
