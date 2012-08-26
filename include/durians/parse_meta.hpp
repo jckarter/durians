@@ -18,20 +18,22 @@ namespace durians {
         template<char C>
         struct lit
         {
-            static constexpr char const *match(char const *c) { return *c == C ? c + 1 : nullptr; }
+            static constexpr size_t match(char const *c, size_t n) {
+                return c[n] == C ? n + 1 : -1;
+            }
         };
         
         template<char Lo, char Hi>
         struct range
         {
-            static constexpr char const *match(char const *c) {
-                return *c >= Lo && *c <= Hi ? c + 1 : nullptr;
+            static constexpr size_t match(char const *c, size_t n) {
+                return c[n] >= Lo && c[n] <= Hi ? n + 1 : -1;
             }
         };
         
         struct any
         {
-            static constexpr char const *match(char const *c) { return c + 1; }
+            static constexpr size_t match(char const *c, size_t n) { return n + 1; }
         };
         
         template<typename...Rule>
@@ -40,28 +42,30 @@ namespace durians {
         template<typename Rule, typename...Rules>
         struct seq<Rule, Rules...>
         {
-            static constexpr char const *next(char const *step) {
-                    return step ? seq<Rules...>::match(step) : nullptr;
+            static constexpr size_t next(char const *c, size_t n, size_t step) {
+                return step != -1 ? seq<Rules...>::match(c, step) : -1;
             }
             
-            static constexpr char const *match(char const *c) {
-                return next(Rule::match(c));
+            static constexpr size_t match(char const *c, size_t n) {
+                return next(c, n, Rule::match(c, n));
             }
         };
         
         template<>
         struct seq<>
         {
-            static constexpr char const *match(char const *c) { return c; }
+            static constexpr size_t match(char const *c, size_t n) { return n; }
         };
         
         template<typename Rule>
         struct opt
         {
-            static constexpr char const *next(char const *c, char const *step) {
-                return step ? step : c;
+            static constexpr size_t next(char const *c, size_t n, size_t step) {
+                return step != -1 ? step : n;
             }
-            static constexpr char const *match(char const *c) { return next(c, Rule::match(c)); }
+            static constexpr size_t match(char const *c, size_t n) {
+                return next(c, n, Rule::match(c, n));
+            }
         };
         
         template<typename...Rule>
@@ -70,42 +74,46 @@ namespace durians {
         template<typename Rule, typename...Rules>
         struct alt<Rule, Rules...>
         {
-            static constexpr char const *next(char const *c, char const *step) {
-                return step ? step : alt<Rules...>::match(c);
+            static constexpr size_t next(char const *c, size_t n, size_t step) {
+                return step != -1 ? step : alt<Rules...>::match(c, n);
             }
-            static constexpr char const *match(char const *c) { return next(c, Rule::match(c)); }
+            static constexpr size_t match(char const *c, size_t n) {
+                return next(c, n, Rule::match(c, n));
+            }
         };
         
         template<>
         struct alt<>
         {
-            static constexpr char const *match(char const *c) { return nullptr; }
+            static constexpr size_t match(char const *c, size_t n) { return -1; }
         };
         
-        constexpr char const *star_next(char const *(*match)(char const*),
-                                        char const *c, char const *step)
+        constexpr size_t star_next(size_t (*match)(char const*, size_t),
+                                   char const *c, size_t n, size_t step)
         {
-            return step ? match(step) : c;
+            return step != -1 ? match(c, step) : n;
         }
 
         template<typename Rule>
         struct star
         {
-            static constexpr char const *match(char const *c) {
-                return star_next(match, c, Rule::match(c));
+            static constexpr size_t match(char const *c, size_t n) {
+                return star_next(match, c, n, Rule::match(c, n));
             }
         };
 
         template<typename Rule>
         struct plus
         {
-            static constexpr char const *next(char const *c, char const *step) {
-                return step ? star<Rule>::match(step) : nullptr;
+            static constexpr size_t next(char const *c, size_t n, size_t step) {
+                return step != -1 ? star<Rule>::match(c, step) : -1;
             }
-            static constexpr char const *match(char const *c) { return next(c, Rule::match(c)); }
+            static constexpr size_t match(char const *c, size_t n) {
+                return next(c, n, Rule::match(c, n));
+            }
         };
         
-        namespace internal {
+        namespace internal {            
             template<typename Seq, typename...Rules>
             struct make_rule;
             
@@ -148,6 +156,12 @@ namespace durians {
                                  range<'a', 'z'>,
                                  range<'0', '9'>,
                                  lit<'_'>>;
+            };
+            
+            template<>
+            struct underscore_rule<'s'>
+            {
+                using rule = alt<lit<' '>, lit<'\t'>, lit<'\r'>, lit<'\n'>>;
             };
             
             template<>
@@ -397,6 +411,88 @@ namespace durians {
         {
             using rule = alt<typename internal::make_rule<seq<>, Rules...>::rule,
                              typename lexer_rule<S, N>::rule>;
+        };
+        
+        template<typename...Rules>
+        struct rules;
+        
+        template<char...C>
+        struct discard;
+        
+        template<typename Rule, template<char...> class Token>
+        struct rule;
+        template<char const *S, template<char...> class Token>
+        using rule_str = rule<typename lexer_rule<S>::rule, Token>;
+
+        namespace internal {
+            template<template<char...> class Token, char const *S, size_t From, size_t To, char...C>
+            struct make_token
+            : make_token<Token, S, From+1, To, C..., S[From]>
+            {};
+
+            template<template<char...> class Token, char const *S, size_t End, char...C>
+            struct make_token<Token, S, End, End, C...>
+            {
+                using type = Token<C...>;
+            };
+        }
+        
+        template<typename AllRules, char const *S,
+                 size_t N = 0,
+                 typename Rules = AllRules, typename Tokens = types<>, typename If = void>
+        struct tokenize;
+        
+        template<typename AllRules, typename Rule, template<char...> class Token, typename...Rules,
+                 char const *S, size_t N, typename Tokens>
+        struct tokenize<AllRules, S, N,
+                        rules<rule<Rule, Token>, Rules...>,
+                        Tokens,
+                        typename std::enable_if<S[N] != 0 && Rule::match(S, N) == -1>::type>
+        : tokenize<AllRules, S, N, rules<Rules...>, Tokens>
+        {
+        };
+        
+        template<typename AllRules, typename...Rules,
+                 char const *S, size_t N, typename Tokens>
+        struct tokenize<AllRules, S, N,
+                        rules<Rules...>,
+                        Tokens,
+                        typename std::enable_if<S[N] == 0>::type>
+        {
+            using tokens = Tokens;
+            static constexpr size_t end = N;
+        };
+        
+        template<typename AllRules,
+                 char const *S, size_t N, typename Tokens>
+        struct tokenize<AllRules, S, N,
+                        rules<>,
+                        Tokens>
+        {
+            using tokens = Tokens;
+            static constexpr size_t end = N;
+        };
+
+        template<typename AllRules, typename Rule, template<char...> class Token, typename...Rules,
+                 char const *S, size_t N, typename...Tokens>
+        struct tokenize<AllRules, S, N,
+                        rules<rule<Rule, Token>, Rules...>,
+                        types<Tokens...>,
+                        typename std::enable_if<Rule::match(S, N) != -1>::type>
+        : tokenize<AllRules, S, Rule::match(S, N), AllRules,
+                   types<Tokens..., typename internal::make_token<Token, S, N, Rule::match(S, N)>::type>>
+        {
+        };
+
+        template<typename AllRules, typename Rule, typename...Rules,
+                 char const *S, size_t N, typename...Tokens>
+        struct tokenize<AllRules, S, N,
+                        rules<rule<Rule, discard>, Rules...>,
+                        types<Tokens...>,
+                        typename std::enable_if<Rule::match(S, N) != -1>::type>
+        : tokenize<AllRules, S, Rule::match(S, N), AllRules,
+                   types<Tokens...>>
+        {
         };
     }
 }

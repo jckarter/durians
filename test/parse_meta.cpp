@@ -13,43 +13,37 @@
 using namespace durians;
 using namespace durians::lex;
 
-constexpr size_t _match_size(char const *begin, char const *end) {
-    return end ? size_t(end - begin) : ~size_t(0);
-}
-template<typename Rule>
-constexpr size_t match_size(char const *s) { return _match_size(s, Rule::match(s)); }
-
-static_assert(match_size<lit<'a'>>("a") == 1, "");
-static_assert(match_size<lit<'a'>>("b") == -1, "");
-static_assert(match_size<any>("a") == 1, "");
-static_assert(match_size<any>("b") == 1, "");
-static_assert(match_size<seq<lit<'a'>, lit<'b'>>>("ab") == 2, "");
-static_assert(match_size<seq<lit<'a'>, lit<'b'>>>("aa") == -1, "");
-static_assert(match_size<opt<lit<'a'>>>("a") == 1, "");
-static_assert(match_size<opt<lit<'a'>>>("b") == 0, "");
-static_assert(match_size<opt<lit<'a'>>>("") == 0, "");
-static_assert(match_size<opt<seq<lit<'a'>, lit<'b'>>>>("ab") == 2, "");
-static_assert(match_size<opt<seq<lit<'a'>, lit<'b'>>>>("aa") == 0, "");
-static_assert(match_size<alt<lit<'a'>, lit<'b'>>>("a") == 1, "");
-static_assert(match_size<alt<lit<'a'>, lit<'b'>>>("b") == 1, "");
-static_assert(match_size<alt<lit<'a'>, lit<'b'>>>("c") == -1, "");
-static_assert(match_size<alt<lit<'a'>, lit<'b'>>>("c") == -1, "");
-static_assert(match_size<star<lit<'a'>>>("") == 0, "");
-static_assert(match_size<star<lit<'a'>>>("a") == 1, "");
-static_assert(match_size<star<lit<'a'>>>("aa") == 2, "");
-static_assert(match_size<star<lit<'a'>>>("aaa") == 3, "");
-static_assert(match_size<star<lit<'a'>>>("aaaa") == 4, "");
-static_assert(match_size<star<lit<'a'>>>("b") == 0, "");
-static_assert(match_size<star<lit<'a'>>>("ab") == 1, "");
-static_assert(match_size<star<lit<'a'>>>("aab") == 2, "");
-static_assert(match_size<star<lit<'a'>>>("aaab") == 3, "");
-static_assert(match_size<star<lit<'a'>>>("aaaab") == 4, "");
-static_assert(match_size<star<seq<lit<'a'>, lit<'b'>>>>("a") == 0, "");
-static_assert(match_size<star<seq<lit<'a'>, lit<'b'>>>>("aa") == 0, "");
-static_assert(match_size<star<seq<lit<'a'>, lit<'b'>>>>("ab") == 2, "");
-static_assert(match_size<star<seq<lit<'a'>, lit<'b'>>>>("aba") == 2, "");
-static_assert(match_size<star<seq<lit<'a'>, lit<'b'>>>>("abaa") == 2, "");
-static_assert(match_size<star<seq<lit<'a'>, lit<'b'>>>>("abab") == 4, "");
+static_assert(lit<'a'>::match("a", 0) == 1, "");
+static_assert(lit<'a'>::match("b", 0) == -1, "");
+static_assert(any::match("a", 0) == 1, "");
+static_assert(any::match("b", 0) == 1, "");
+static_assert(seq<lit<'a'>, lit<'b'>>::match("ab", 0) == 2, "");
+static_assert(seq<lit<'a'>, lit<'b'>>::match("aa", 0) == -1, "");
+static_assert(opt<lit<'a'>>::match("a", 0) == 1, "");
+static_assert(opt<lit<'a'>>::match("b", 0) == 0, "");
+static_assert(opt<lit<'a'>>::match("", 0) == 0, "");
+static_assert(opt<seq<lit<'a'>, lit<'b'>>>::match("ab", 0) == 2, "");
+static_assert(opt<seq<lit<'a'>, lit<'b'>>>::match("aa", 0) == 0, "");
+static_assert(alt<lit<'a'>, lit<'b'>>::match("a", 0) == 1, "");
+static_assert(alt<lit<'a'>, lit<'b'>>::match("b", 0) == 1, "");
+static_assert(alt<lit<'a'>, lit<'b'>>::match("c", 0) == -1, "");
+static_assert(alt<lit<'a'>, lit<'b'>>::match("c", 0) == -1, "");
+static_assert(star<lit<'a'>>::match("", 0) == 0, "");
+static_assert(star<lit<'a'>>::match("a", 0) == 1, "");
+static_assert(star<lit<'a'>>::match("aa", 0) == 2, "");
+static_assert(star<lit<'a'>>::match("aaa", 0) == 3, "");
+static_assert(star<lit<'a'>>::match("aaaa", 0) == 4, "");
+static_assert(star<lit<'a'>>::match("b", 0) == 0, "");
+static_assert(star<lit<'a'>>::match("ab", 0) == 1, "");
+static_assert(star<lit<'a'>>::match("aab", 0) == 2, "");
+static_assert(star<lit<'a'>>::match("aaab", 0) == 3, "");
+static_assert(star<lit<'a'>>::match("aaaab", 0) == 4, "");
+static_assert(star<seq<lit<'a'>, lit<'b'>>>::match("a", 0) == 0, "");
+static_assert(star<seq<lit<'a'>, lit<'b'>>>::match("aa", 0) == 0, "");
+static_assert(star<seq<lit<'a'>, lit<'b'>>>::match("ab", 0) == 2, "");
+static_assert(star<seq<lit<'a'>, lit<'b'>>>::match("aba", 0) == 2, "");
+static_assert(star<seq<lit<'a'>, lit<'b'>>>::match("abaa", 0) == 2, "");
+static_assert(star<seq<lit<'a'>, lit<'b'>>>::match("abab", 0) == 4, "");
 
 struct test_rules {
     static constexpr char a[] = "abc";
@@ -109,4 +103,33 @@ static_assert(only_same<lexer_rule<test_rules::m>::rule,
               "");
 static_assert(only_same<lexer_rule<test_rules::n>::rule,
                         alt<range<'\n', '\r'>>>::value,
+              "");
+
+template<char...C> struct op;
+template<char...C> struct number;
+
+struct test_lex
+{
+    static constexpr char op[] = R"([+\-*])";
+    static constexpr char number[] = R"(\d+)";
+    static constexpr char ws[] = R"(\s+)";
+    
+    using lexer = rules<rule_str<number, ::number>,
+                        rule_str<ws, discard>,
+                        rule_str<op, ::op>
+                        >;
+};
+
+struct test_lex_strings
+{
+    static constexpr char a[] = "  123  + 456*- 789  ";
+};
+
+static_assert(lexer_rule<test_lex::ws>::rule::match(test_lex_strings::a, 0) == 2, "");
+static_assert(lexer_rule<test_lex::number>::rule::match(test_lex_strings::a, 2) == 5, "");
+static_assert(lexer_rule<test_lex::ws>::rule::match(test_lex_strings::a, 5) == 7, "");
+static_assert(lexer_rule<test_lex::op>::rule::match(test_lex_strings::a, 7) == 8, "");
+
+static_assert(std::is_same<tokenize<test_lex::lexer, test_lex_strings::a>::tokens,
+                           types<number<'1','2','3'>, op<'+'>, number<'4','5','6'>, op<'*'>, op<'-'>, number<'7','8','9'>>>::value,
               "");
