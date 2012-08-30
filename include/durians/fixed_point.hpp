@@ -15,19 +15,24 @@
 
 namespace durians {
     namespace internal {
-        // FIXME binary exponentiation
+        // FIXME use binary exponentiation instead of incremental
         constexpr size_t int_pow(size_t b, size_t e) { return e == 0 ? 1 : b * int_pow(b, e - 1); }
+
         constexpr int16_t wide_mul(int8_t a, int8_t b) { return int16_t(a) * int16_t(b); }
         constexpr int32_t wide_mul(int16_t a, int16_t b) { return int32_t(a) * int32_t(b); }
         constexpr int64_t wide_mul(int32_t a, int32_t b) { return int64_t(a) * int64_t(b); }
-        
-        // FIXME what if int128 is unsupported?
-        constexpr __int128_t wide_mul(int64_t a, int64_t b) { return __int128_t(a) * __int128_t(b); }
+
+// FIXME what if int128 is unavailable?
+#define DURIANS_INT128_TYPE __int128_t
+
+        constexpr DURIANS_INT128_TYPE wide_mul(int64_t a, int64_t b) {
+            return DURIANS_INT128_TYPE(a) * DURIANS_INT128_TYPE(b);
+        }
         
         template<typename Int>
-        constexpr Int mul_fixed(Int a, Int b, ptrdiff_t denom) { return Int(wide_mul(a, b) / denom); }
+        constexpr Int mul_fixed(Int a, Int b, Int denom) { return Int(wide_mul(a, b) / denom); }
         template<typename Int>
-        constexpr Int div_fixed(Int a, Int b, ptrdiff_t denom) { return Int(wide_mul(a, Int(denom)) / b); }
+        constexpr Int div_fixed(Int a, Int b, Int denom) { return Int(wide_mul(a, denom) / b); }
 
         template<size_t Integral, size_t Size, size_t Denominator, char...C>
         struct dec_fixed_literal_value;
@@ -135,17 +140,18 @@ namespace durians {
     template<size_t Size, size_t Denominator = (size_t(1) << (Size/2))>
     class fixed
     {
-        static_assert(Denominator >= 0, "fixed denominator may not be zero or negative");
-        static_assert(Denominator <= PTRDIFF_MAX, "fixed denominator must fit inside a ptrdiff_t");
-        
-        signed_t<Size> value;
+        static_assert(Denominator > 0, "fixed denominator may not be zero or negative");
+        static_assert(Denominator < (size_t(1) << (Size-1)),
+                      "fixed denominator must fit inside signed integer type of given size");
         
         struct precooked_t {};
         constexpr explicit fixed(signed_t<Size> value, precooked_t) : value(value) {}
 
     public:
+        signed_t<Size> value;
+        
         using value_type = signed_t<Size>;
-        static constexpr intmax_t denominator = intmax_t(Denominator);
+        static constexpr value_type denominator = value_type(Denominator);
         
         fixed() = default;
         
@@ -217,7 +223,10 @@ namespace durians {
             return *this;
         }
         
-        constexpr fixed recip() const { return fixed(denominator/value, precooked_t{}); }
+        constexpr fixed recip() const {
+            return fixed(internal::div_fixed(denominator, value, denominator),
+                         precooked_t{});
+        }
         
         constexpr fixed operator/(fixed o) const {
             return fixed(internal::div_fixed(value, o.value, denominator), precooked_t{});
