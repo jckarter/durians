@@ -105,12 +105,20 @@ static_assert(only_same<lexer_rule<test_rules::n>::rule,
                         alt<range<'\n', '\r'>>>::value,
               "");
 
-template<char...C> struct op;
-template<char...C> struct number;
+template<char C> struct op {};
+
+constexpr int decimal(int n) { return n; }
+template<typename...Char>
+constexpr int decimal(int n, char a, Char...aa) { return decimal(n*10 + a, aa...); }
+
+template<char...C> struct number
+{
+    static constexpr int value = decimal(0, C...);
+};
 
 struct test_lex
 {
-    static constexpr char op[] = R"([+\-*])";
+    static constexpr char op[] = R"([+\-*()])";
     static constexpr char number[] = R"(\d+)";
     static constexpr char ws[] = R"(\s+)";
     
@@ -122,14 +130,69 @@ struct test_lex
 
 struct test_lex_strings
 {
-    static constexpr char a[] = "  123  + 456*- 789  ";
+    static constexpr char a[] = "123+456*-789";
+    static constexpr char b[] = "  123  + 456*- 789  ";
+    static constexpr char c[] = "123 + 456*-789???";
 };
 
-static_assert(lexer_rule<test_lex::ws>::rule::match(test_lex_strings::a, 0) == 2, "");
-static_assert(lexer_rule<test_lex::number>::rule::match(test_lex_strings::a, 2) == 5, "");
-static_assert(lexer_rule<test_lex::ws>::rule::match(test_lex_strings::a, 5) == 7, "");
-static_assert(lexer_rule<test_lex::op>::rule::match(test_lex_strings::a, 7) == 8, "");
+static_assert(lexer_rule<test_lex::ws>::rule::match(test_lex_strings::b, 0) == 2, "");
+static_assert(lexer_rule<test_lex::number>::rule::match(test_lex_strings::b, 2) == 5, "");
+static_assert(lexer_rule<test_lex::ws>::rule::match(test_lex_strings::b, 5) == 7, "");
+static_assert(lexer_rule<test_lex::op>::rule::match(test_lex_strings::b, 7) == 8, "");
 
 static_assert(std::is_same<tokenize<test_lex::lexer, test_lex_strings::a>::tokens,
                            types<number<'1','2','3'>, op<'+'>, number<'4','5','6'>, op<'*'>, op<'-'>, number<'7','8','9'>>>::value,
               "");
+static_assert(test_lex_strings::a[tokenize<test_lex::lexer, test_lex_strings::a>::end] == 0,
+              "");
+
+static_assert(std::is_same<tokenize<test_lex::lexer, test_lex_strings::b>::tokens,
+                           types<number<'1','2','3'>, op<'+'>, number<'4','5','6'>, op<'*'>, op<'-'>, number<'7','8','9'>>>::value,
+              "");
+static_assert(test_lex_strings::b[tokenize<test_lex::lexer, test_lex_strings::b>::end] == 0,
+              "");
+
+static_assert(std::is_same<tokenize<test_lex::lexer, test_lex_strings::c>::tokens,
+                           types<number<'1','2','3'>, op<'+'>, number<'4','5','6'>, op<'*'>, op<'-'>, number<'7','8','9'>>>::value,
+              "");
+static_assert(test_lex_strings::c[tokenize<test_lex::lexer, test_lex_strings::c>::end] == '?',
+              "");
+
+template<typename Arg> struct negate
+{
+    static constexpr int value = -Arg::value;
+};
+template<typename Arg1, typename Arg2> struct add
+{
+    static constexpr int value = Arg1::value + Arg2::value;
+};
+template<typename Arg1, typename Arg2> struct multiply
+{
+    static constexpr int value = Arg1::value * Arg2::value;
+};
+
+// basic-expr = number | '(' expr ')'
+// multiply = basic-expr ('*' multiply)?
+// add = multiply ('+' add)?
+// expr = add
+
+struct test_parse {
+    struct expr;
+    
+    struct basic_expr : parse::alt<parse::token<number>,
+                                   parse::seq<op<'('>,
+                                              expr,
+                                              op<')'>>>
+    {};
+    
+    struct negate : parse::alt<parse::seq<op<'-'>, negate>, basic_expr>
+    {};
+    
+    struct multiply : parse::seq<negate, parse::opt<parse::seq<op<'*'>, multiply>>>
+    {};
+    
+    struct add : parse::seq<multiply, parse::opt<parse::seq<op<'+'>, add>>>
+    {};
+    
+    struct expr : add {};
+};

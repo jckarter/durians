@@ -24,5 +24,7 @@ int main()
     RUN_TEST(test_packs);
     RUN_TEST(test_static_string);
     RUN_TEST(test_timing);
+    RUN_TEST(test_stdint);
+    RUN_TEST(test_fixed_point);
     std::puts("ok");
 }
