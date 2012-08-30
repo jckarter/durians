@@ -23,28 +23,26 @@ void test_timing()
 {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreturn-stack-address"
-    log_time("test_timing", [&]{
-        auto timing = chrono::nanoseconds::zero();
-        int x = 12;
-        
-        int val = time(timing, [&]() -> int {
-            for (size_t i = 0; i < 10; ++i)
-                this_thread::yield();
-            return x;
-        });
-        assert(timing != chrono::nanoseconds::zero());
-        assert(val == 12);
-        
-        timing = chrono::nanoseconds::zero();
-        
-        int &ref = time(timing, [&]() -> int& {
-            for (size_t i = 0; i < 10; ++i)
-                this_thread::yield();
-            return x;
-        });
-        
-        assert(timing != chrono::nanoseconds::zero());
-        assert(&ref == &x);
+    auto timing = chrono::nanoseconds::zero();
+    int x = 12;
+    
+    int val = time(timing, [&]() -> int {
+        for (size_t i = 0; i < 10; ++i)
+            this_thread::yield();
+        return x;
     });
+    assert(timing != chrono::nanoseconds::zero());
+    assert(val == 12);
+    
+    timing = chrono::nanoseconds::zero();
+    
+    int &ref = time(timing, [&]() -> int& {
+        for (size_t i = 0; i < 10; ++i)
+            this_thread::yield();
+        return x;
+    });
+    
+    assert(timing != chrono::nanoseconds::zero());
+    assert(&ref == &x);
 #pragma clang pop
 }
