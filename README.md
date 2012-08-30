@@ -27,6 +27,7 @@ Preprocessor macros are of course not namespaced.
 * [durians/reftype.hpp](#duriansreftypehpp)
 * [durians/scope.hpp](#duriansscopehpp)
 * [durians/slice.hpp](#duriansslicehpp)
+* [durians/stdint.hpp](#duriansstdinthpp)
 * [durians/struct_meta.hpp](#duriansstruct_metahpp)
 
 ## durians/enum_meta.hpp
@@ -417,6 +418,19 @@ constructors:
 * `basic_slice2d(T *data, size_t width, size_t stride, size_t height)` constructs a `basic_slice2d`
     of width `width`, stride `stride`, and height `height` over the objects starting from the one
     pointed to by `data`.
+
+## durians/stdint.hpp
+
+This header provides template aliases equivalent to the typedefs in the standard `cstdint` header.
+These aliases each take a `size_t` template argument that may be `8`, `16`, `32`, or `64`,
+corresponding to the desired number of bits in the integer type.
+
+* `signed_t<Bits>` is an alias to `std::int8_t`, `std::int16_t`, etc.
+* `unsigned_t<Bits>` is an alias to `std::uint8_t`, etc.
+* `signed_least_t<Bits>` is an alias to `std::int_least8_t`, etc.
+* `unsigned_least_t<Bits>` is an alias to `std::uint_least8_t`, etc.
+* `signed_fast_t<Bits>` is an alias to `std::int_fast8_t`, etc.
+* `unsigned_fast_t<Bits>` is an alias to `std::uint_fast8_t`, etc.
 
 ## durians/struct_meta.hpp
 
