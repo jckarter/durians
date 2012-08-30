@@ -19,6 +19,7 @@ All symbols described below are defined in the `durians` namespace unless specif
 Preprocessor macros are of course not namespaced.
 
 * [durians/enum_meta.hpp](#duriansenum_metahpp)
+* [durians/fixed_point.hpp](#duriansfixed_pointhpp)
 * [durians/io.hpp](#duriansiohpp)
 * [durians/maybe.hpp](#duriansmaybehpp)
 * [durians/misc.hpp](#duriansmischpp)
@@ -57,6 +58,52 @@ A type `E` created by the `META_ENUM` macros can be used with the following func
 * `char const *enum_member_name(E e)` returns the name of the value of `e` as a C string.
 * `E enum_member_from_name<E>(char const *name)` returns the value of type `E` named by the C
     string `name`. The program aborts if there is no member of `E` named by `name`.
+
+## durians/fixed_point.hpp
+
+This header defines a template type `fixed<Size, Denominator>`, representing a fixed-point numeric
+type with `Size` bits of precision and fixed denominator `Denominator`. `Denominator` may be any
+positive value representable by a signed `Bits`-bit integer. The denominator does not need to be a
+power of two, though multiplication and division of fixed-point types with power-of-two denominators
+will be more efficient. All `const` operations on `fixed` types are also `constexpr` unless
+otherwise noted. `fixed` is POD.
+
+`fixed` supports the following operations:
+
+* Explicit construction from an integer or floating-point type. Construction from floating-point
+  is not `constexpr`.
+* Construction from two integers. `fixed(integral, mantissa)` returns the fixed-point value
+  `integral + mantissa/Denominator`.
+* `+`, `-`, `*`, `/`, and `%` operators are defined for `fixed` or integral operands and behave as
+  expected. Inaccurate results are truncated towards zero.
+* `==`, `!=`, `<`, `>`, `<=`, and `>=` are defined for ordered comparisons between `fixed` values.
+* The `trunc()` method returns an integral value representing the fixed value rounded toward zero.
+* The `recip()` method returns the reciprocal of the fixed value.
+* `explicit operator bool()` returns true if the fixed value is non-zero.
+* `explicit operator double()` and `explicit operator long double()` return floating-point
+  approximations of the fixed value.
+
+The macro `S_DEFINE_FIXED_LITERAL(Type, _Tag)` defines a literal operator `Type operator"" _Tag()`
+in the current namespace. The operator constructs a value of the `fixed` instance `Type` from a
+literal integer or floating-point representation, and is `constexpr`. Currently only decimal integer
+and floating-point literals without exponents are supported. For example:
+
+```c++
+#include <durians/fixed_point.hpp>
+
+using dollars = durians::fixed<64, 100>;
+S_DEFINE_FIXED_LITERAL(dollars, _Dollars);
+
+static_assert(1_Dollars + 1.23_Dollars + 0.01_Dollars == 2.24_Dollars, "");
+```
+
+Two type aliases are defined:
+
+* `fixed_bin<Size, Bits>` is aliased to a fixed-point type with `Bits` denominator bits, in other
+  words, `fixed<Size, (1 << Bits)>`.
+* `fixed_dec<Size, Places>` is aliased to a fixed-point type capable of exactly representing
+  decimal fractions with `Places` decimal places, in other words, `fixed<Size, pow(10, Places)>`
+  (if `pow` were `constexpr`).
 
 ## durians/io.hpp
 
