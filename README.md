@@ -200,6 +200,10 @@ This header defines the following symbols:
     expressions to determine the type of an expression involving a value of type `T` without
     imposing any requirements on the type, for example `decltype(lvalue<foo const>().foo())`.
 
+* The template functions `static_min(a, b)` and `static_max(a, b)` return the lesser or greater of
+    `a` and `b` as ordered by the `<` operator. Unlike `std::min` and `std::max` these functions are
+    `constexpr` and return by value.
+
 ## durians/packs.hpp
 
 This header defines types and trait classes for manipulating variadic parameter packs.
