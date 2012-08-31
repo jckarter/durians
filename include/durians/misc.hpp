@@ -78,6 +78,11 @@ namespace durians {
 
     template<typename Default, typename...Case>
     using switch_ = typename internal::_switch_<Default, Case...>::type;
+    
+    template<typename T, typename U>
+    constexpr typename std::common_type<T, U>::type static_min(T a, U b) { return a < b ? a : b; }
+    template<typename T, typename U>
+    constexpr typename std::common_type<T, U>::type static_max(T a, U b) { return a > b ? a : b; }
 }
 
 #endif

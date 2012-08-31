@@ -9,6 +9,7 @@
 #ifndef durians_fixed_point_hpp
 #define durians_fixed_point_hpp
 
+#include <durians/misc.hpp>
 #include <durians/stdint.hpp>
 #include <cmath>
 #include <type_traits>
@@ -147,13 +148,19 @@ namespace durians {
         struct precooked_t {};
         constexpr explicit fixed(signed_t<Size> value, precooked_t) : value(value) {}
 
-    public:
         signed_t<Size> value;
+        
+        template<size_t Size1, size_t Denom1>
+        friend class fixed;
+
+    public:
         
         using value_type = signed_t<Size>;
         static constexpr value_type denominator = value_type(Denominator);
         
         fixed() = default;
+        fixed(fixed const &) = default;
+        fixed(fixed &&) = default;
         
         template<typename Int>
         constexpr explicit fixed(Int integral,
@@ -164,6 +171,12 @@ namespace durians {
         explicit fixed(long double fp) : value(std::lrintl(fp * denominator)) {}
         constexpr explicit fixed(value_type integral, value_type fraction)
         : value(integral * denominator + fraction) {}
+        
+        template<size_t Size1, size_t Denom1>
+        constexpr explicit fixed(fixed<Size1, Denom1> fx)
+        : value(internal::wide_mul(signed_t<static_max(Size, Size1)>(fx.value),
+                                   signed_t<static_max(Size, Size1)>(denominator))
+                / fixed<Size1, Denom1>::denominator) {}
         
         template<char...C>
         static constexpr fixed literal() {

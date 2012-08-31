@@ -53,6 +53,14 @@ namespace {
         assert(double(Fixed(1.5)) == 1.5);
         assert(double(Fixed(-1.5)) == -1.5);
         
+        assert(fixed_16_16(Fixed(1.5)) == fixed_16_16(1.5));
+        assert(fixed_32_32(Fixed(1.5)) == fixed_32_32(1.5));
+        assert(fixed_cents(Fixed(1.5)) == fixed_cents(1.5));
+
+        assert(Fixed(fixed_16_16(1.5)) == Fixed(1.5));
+        assert(Fixed(fixed_32_32(1.5)) == Fixed(1.5));
+        assert(Fixed(fixed_cents(1.5)) == Fixed(1.5));
+        
         static_assert(Fixed(2) + Fixed(2) == Fixed(4), "");
         static_assert(Fixed(2) * Fixed(2) == Fixed(4), "");
         static_assert(Fixed(4) / Fixed(2) == Fixed(2), "");
@@ -65,6 +73,20 @@ namespace {
         static_assert(Fixed(1, Fixed::denominator/2).trunc() == 1, "");
         static_assert(Fixed(-1, -Fixed::denominator/2).trunc() == -1, "");
 
+        static_assert(fixed_16_16(Fixed(1, Fixed::denominator/2))
+                      == fixed_16_16(1, fixed_16_16::denominator/2), "");
+        static_assert(fixed_32_32(Fixed(1, Fixed::denominator/2))
+                      == fixed_32_32(1, fixed_32_32::denominator/2), "");
+        static_assert(fixed_cents(Fixed(1, Fixed::denominator/2))
+                      == fixed_cents(1, fixed_cents::denominator/2), "");
+        
+        static_assert(Fixed(fixed_16_16(1, fixed_16_16::denominator/2))
+                      == Fixed(1, Fixed::denominator/2), "");
+        static_assert(Fixed(fixed_32_32(1, fixed_32_32::denominator/2))
+                      == Fixed(1, Fixed::denominator/2), "");
+        static_assert(Fixed(fixed_cents(1, fixed_cents::denominator/2))
+                      == Fixed(1, Fixed::denominator/2), "");
+        
         // FIXME xcode 4.4 does not yet support user-defined literal syntax
         static_assert(Fixed::template literal<'0'>() == Fixed(0), "");
         static_assert(Fixed::template literal<'1'>() == Fixed(1), "");

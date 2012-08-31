@@ -15,11 +15,6 @@
 #include <array>
 
 namespace durians {
-    template<typename T, typename U>
-    constexpr typename std::common_type<T, U>::type static_min(T a, U b) { return a < b ? a : b; }
-    template<typename T, typename U>
-    constexpr typename std::common_type<T, U>::type static_max(T a, U b) { return a > b ? a : b; }
-    
     struct static_string_node {
         char const *data;
         size_t size;
